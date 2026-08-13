@@ -46,6 +46,7 @@ export function ProductForm({
     product?.image_url ?? null,
   )
   const [uploading, setUploading] = useState(false)
+  const [imageError, setImageError] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const {
@@ -108,14 +109,19 @@ export function ProductForm({
     if (!file) return
 
     if (!file.type.startsWith('image/')) {
-      toast.error('Please select an image file')
+      setImageError('Please select an image file (PNG, JPG, or WebP).')
+      if (fileInputRef.current) fileInputRef.current.value = ''
       return
     }
-    if (file.size > 5 * 1024 * 1024) {
-      toast.error('Image must be smaller than 5 MB')
+    if (file.size > 650 * 1024) {
+      setImageError(
+        `File is too large (${(file.size / 1024).toFixed(0)} KB). Max allowed size is 650 KB.`,
+      )
+      if (fileInputRef.current) fileInputRef.current.value = ''
       return
     }
 
+    setImageError(null)
     setImageFile(file)
     const objectUrl = URL.createObjectURL(file)
     setImagePreview(objectUrl)
@@ -124,6 +130,7 @@ export function ProductForm({
   function handleRemoveImage() {
     setImageFile(null)
     setImagePreview(null)
+    setImageError(null)
     setValue('image_url', '')
     if (fileInputRef.current) fileInputRef.current.value = ''
   }
@@ -167,11 +174,11 @@ export function ProductForm({
   const inputCls = (hasError: boolean) =>
     cn(
       'block w-full rounded-lg border bg-white px-3 py-2 text-sm text-zinc-900 placeholder-zinc-400',
-      'focus:outline-none focus:ring-2 focus:ring-green-700 focus:ring-offset-0',
+      'focus:outline-none focus:ring-2 focus:ring-blue-700 focus:ring-offset-0',
       'disabled:opacity-50 disabled:cursor-not-allowed',
       hasError
         ? 'border-red-400 focus:ring-red-500'
-        : 'border-zinc-300 focus:border-green-700',
+        : 'border-zinc-300 focus:border-blue-700',
     )
 
   const labelCls = 'block text-sm font-medium text-zinc-700 mb-1'
@@ -221,7 +228,13 @@ export function ProductForm({
               <Upload className="w-4 h-4" />
               {imagePreview ? 'Change Image' : 'Upload Image'}
             </label>
-            <p className="mt-1.5 text-xs text-zinc-500">PNG, JPG, WebP up to 5 MB</p>
+            <p className="mt-1.5 text-xs text-zinc-500">PNG, JPG, WebP up to 650 KB</p>
+            {imageError && (
+              <p className="mt-1.5 flex items-start gap-1 text-xs text-red-600">
+                <span className="mt-px leading-none">⚠</span>
+                <span>{imageError}</span>
+              </p>
+            )}
           </div>
         </div>
       </div>
@@ -484,7 +497,7 @@ export function ProductForm({
         <button
           type="submit"
           disabled={isLoading}
-          className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-white bg-green-700 hover:bg-green-800 active:bg-green-900 transition-colors disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-700 focus-visible:ring-offset-2"
+          className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-white bg-blue-700 hover:bg-blue-800 active:bg-blue-900 transition-colors disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-700 focus-visible:ring-offset-2"
         >
           {isLoading && <Loader2 className="w-4 h-4 animate-spin" />}
           {product ? 'Update Product' : 'Create Product'}

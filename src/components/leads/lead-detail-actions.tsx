@@ -2,12 +2,14 @@
 
 import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
-import { Pencil, Trophy, XCircle, FileText, X, Loader2 } from 'lucide-react'
+import { Pencil, Trophy, XCircle, FileText, X, Loader2, Trash2 } from 'lucide-react'
 import * as Dialog from '@radix-ui/react-dialog'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
 import { LeadForm } from '@/components/leads/lead-form'
 import { setLeadStage, updateLead } from '@/app/(dashboard)/leads/actions'
+import { deleteLead } from '@/lib/actions/leads'
+import { ConfirmDialog } from '@/components/shared/confirm-dialog'
 import type { Lead, Profile, Role } from '@/lib/types/database'
 import type { LeadFormValues } from '@/lib/validations'
 
@@ -24,8 +26,10 @@ export function LeadDetailActions({
 }: LeadDetailActionsProps) {
   const router = useRouter()
   const [editOpen, setEditOpen] = useState(false)
+  const [deleteOpen, setDeleteOpen] = useState(false)
   const [stageLoading, startStageTransition] = useTransition()
   const [editLoading, startEditTransition] = useTransition()
+  const [deleteLoading, startDeleteTransition] = useTransition()
 
   function handleMarkWon() {
     if (lead.stage === 'Won') return
@@ -48,6 +52,19 @@ export function LeadDetailActions({
         toast.error(result.error)
       } else {
         toast.success('Lead marked as Lost')
+        router.refresh()
+      }
+    })
+  }
+
+  function handleDeleteLead() {
+    startDeleteTransition(async () => {
+      const result = await deleteLead(lead.id)
+      if (result.error) {
+        toast.error(result.error)
+      } else {
+        toast.success('Lead deleted')
+        router.push('/leads')
         router.refresh()
       }
     })
@@ -137,7 +154,31 @@ export function LeadDetailActions({
           'red',
           lead.stage === 'Lost',
         )}
+
+        {/* Delete Lead — admin only */}
+        {userRole === 'admin' && (
+          <button
+            type="button"
+            onClick={() => setDeleteOpen(true)}
+            className="w-full flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-lg border border-red-200 bg-red-50 text-red-700 hover:bg-red-100 transition-colors mt-2"
+          >
+            <Trash2 className="w-4 h-4" />
+            Delete Lead
+          </button>
+        )}
       </div>
+
+      {/* ── Delete Confirm ─────────────────────────────────────────────────── */}
+      <ConfirmDialog
+        open={deleteOpen}
+        onOpenChange={setDeleteOpen}
+        title="Delete this lead?"
+        description={`"${lead.name}" and all their activities will be permanently removed. This cannot be undone.`}
+        confirmLabel="Delete Lead"
+        variant="destructive"
+        loading={deleteLoading}
+        onConfirm={handleDeleteLead}
+      />
 
       {/* ── Edit Dialog ─────────────────────────────────────────────────────── */}
       <Dialog.Root open={editOpen} onOpenChange={setEditOpen}>

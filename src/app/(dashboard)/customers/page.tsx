@@ -178,7 +178,7 @@ export default async function CustomersPage({
             name="q"
             defaultValue={searchQuery}
             placeholder="Search customers…"
-            className="w-full pl-9 pr-3 py-2 rounded-lg border border-zinc-300 text-sm text-zinc-900 bg-white outline-none focus:ring-2 focus:ring-green-700/25 focus:border-green-700 transition-shadow"
+            className="w-full pl-9 pr-3 py-2 rounded-lg border border-zinc-300 text-sm text-zinc-900 bg-white outline-none focus:ring-2 focus:ring-blue-700/25 focus:border-blue-700 transition-shadow"
           />
         </form>
       </div>

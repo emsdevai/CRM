@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import Image from 'next/image'
 import {
   TrendingUp,
   Target,
@@ -30,7 +31,7 @@ import type { Lead, Invoice, Profile, Product } from '@/lib/types/database'
 // Category fill colours matching FURNITURE_CATEGORIES
 // ---------------------------------------------------------------------------
 const CATEGORY_COLORS: Record<string, string> = {
-  'Living Room': '#10b981',
+  'Living Room': '#0ea5e9',
   Bedroom:       '#3b82f6',
   Dining:        '#f59e0b',
   Office:        '#8b5cf6',
@@ -65,7 +66,7 @@ function RecentLeadsTable({
         <h3 className="text-sm font-semibold text-zinc-900">Recent Leads</h3>
         <Link
           href="/leads"
-          className="flex items-center gap-1 text-xs text-green-600 hover:text-green-700 font-medium"
+          className="flex items-center gap-1 text-xs text-blue-600 hover:text-blue-700 font-medium"
         >
           View All <ArrowRight className="w-3.5 h-3.5" />
         </Link>
@@ -89,7 +90,7 @@ function RecentLeadsTable({
                   <div>
                     <Link
                       href={`/leads/${lead.id}`}
-                      className="text-sm font-medium text-zinc-900 hover:text-green-600 transition-colors"
+                      className="text-sm font-medium text-zinc-900 hover:text-blue-600 transition-colors"
                     >
                       {lead.name}
                     </Link>
@@ -133,7 +134,7 @@ function RecentInvoicesTable({
         <h3 className="text-sm font-semibold text-zinc-900">Recent Invoices</h3>
         <Link
           href="/invoices"
-          className="flex items-center gap-1 text-xs text-green-600 hover:text-green-700 font-medium"
+          className="flex items-center gap-1 text-xs text-blue-600 hover:text-blue-700 font-medium"
         >
           View All <ArrowRight className="w-3.5 h-3.5" />
         </Link>
@@ -156,7 +157,7 @@ function RecentInvoicesTable({
                 <td className="px-5 py-2.5">
                   <Link
                     href={`/invoices/${inv.id}`}
-                    className="text-sm font-medium text-zinc-900 hover:text-green-600 transition-colors"
+                    className="text-sm font-medium text-zinc-900 hover:text-blue-600 transition-colors"
                   >
                     {inv.invoice_no}
                   </Link>
@@ -195,7 +196,7 @@ function BestSellersTable({ products }: { products: Product[] }) {
         <h3 className="text-sm font-semibold text-zinc-900">Best Sellers</h3>
         <Link
           href="/inventory"
-          className="flex items-center gap-1 text-xs text-green-600 hover:text-green-700 font-medium"
+          className="flex items-center gap-1 text-xs text-blue-600 hover:text-blue-700 font-medium"
         >
           View Inventory <ArrowRight className="w-3.5 h-3.5" />
         </Link>
@@ -226,8 +227,18 @@ function BestSellersTable({ products }: { products: Product[] }) {
                 </td>
                 <td className="px-5 py-3">
                   <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 bg-green-50 rounded-lg flex items-center justify-center flex-shrink-0">
-                      <Package className="w-4 h-4 text-green-600" />
+                    <div className="w-9 h-9 rounded-lg overflow-hidden bg-zinc-100 flex-shrink-0 flex items-center justify-center border border-zinc-100">
+                      {product.image_url ? (
+                        <Image
+                          src={product.image_url}
+                          alt={product.name}
+                          width={36}
+                          height={36}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <Package className="w-4 h-4 text-zinc-300" />
+                      )}
                     </div>
                     <div>
                       <p className="text-sm font-medium text-zinc-900 leading-tight">
@@ -246,7 +257,7 @@ function BestSellersTable({ products }: { products: Product[] }) {
                   </span>
                 </td>
                 <td className="px-5 py-3 text-right">
-                  <span className="text-sm font-bold text-green-600 tabular-nums">
+                  <span className="text-sm font-bold text-blue-600 tabular-nums">
                     {product.sold_count}
                   </span>
                 </td>

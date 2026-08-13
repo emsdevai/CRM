@@ -269,6 +269,7 @@ export async function getInventoryStats(): Promise<{
       stock: number
       reorder_level: number
       category: string | null
+      image_url: string | null
     }>
   } | null
   error: string | null
@@ -279,7 +280,7 @@ export async function getInventoryStats(): Promise<{
 
     const { data: products, error } = await supabase
       .from('products')
-      .select('id, name, sku, stock, reorder_level, category')
+      .select('id, name, sku, stock, reorder_level, category, image_url')
 
     if (error) return { data: null, error: error.message }
 
@@ -296,6 +297,7 @@ export async function getInventoryStats(): Promise<{
       stock: number
       reorder_level: number
       category: string | null
+      image_url: string | null
     }> = []
 
     for (const p of products ?? []) {

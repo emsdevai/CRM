@@ -3,7 +3,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { createServerClient } from '@supabase/ssr'
 import { revalidatePath } from 'next/cache'
-import type { Profile } from '@/lib/types/database'
+import type { Profile, Role } from '@/lib/types/database'
 
 // ---------------------------------------------------------------------------
 // Guard: admin only
@@ -43,15 +43,12 @@ export async function getTeamMembers(): Promise<{
   error: string | null
 }> {
   try {
-    const { supabase } = await requireAdmin()
-    const { data, error } = await supabase
+    await requireAdmin() // ensure caller is admin
+    // Use service client to bypass RLS and read all profiles
+    const service = createServiceClient()
+    const { data, error } = await service
       .from('profiles')
-      .select(
-        `
-        *,
-        manager:profiles!profiles_manager_id_fkey(id, name)
-      `,
-      )
+      .select('*')
       .order('role', { ascending: true })
       .order('name', { ascending: true })
 
@@ -59,6 +56,23 @@ export async function getTeamMembers(): Promise<{
     return { data: (data as Profile[]) ?? [], error: null }
   } catch (err: any) {
     return { data: [], error: err.message }
+  }
+}
+
+export async function getManagersForAdmin(): Promise<{
+  data: Array<{ id: string; name: string | null; role: Role }>
+}> {
+  try {
+    await requireAdmin()
+    const service = createServiceClient()
+    const { data } = await service
+      .from('profiles')
+      .select('id, name, role')
+      .in('role', ['manager', 'admin'])
+      .order('name')
+    return { data: (data ?? []) as Array<{ id: string; name: string | null; role: Role }> }
+  } catch {
+    return { data: [] }
   }
 }
 

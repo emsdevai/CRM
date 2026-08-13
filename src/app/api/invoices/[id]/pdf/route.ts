@@ -18,7 +18,7 @@ export async function GET(
     return new NextResponse('Unauthorized', { status: 401 })
   }
 
-  // Fetch invoice with items + customer
+  // Fetch invoice with items + customer (also join lead as fallback for Billed To)
   const { data: invoice, error } = await supabase
     .from('invoices')
     .select(
@@ -26,6 +26,7 @@ export async function GET(
       *,
       items:invoice_items(*),
       customer:customers(id, name, phone, email, address, city, state),
+      lead:leads(id, name, phone, email, city, state),
       salesperson:profiles!invoices_salesperson_id_fkey(id, name, phone)
       `,
     )
@@ -66,7 +67,7 @@ export async function GET(
   const cgst = ((invoice.gst_total as number) ?? 0) / 2
   const sgst = cgst
 
-  type Customer = {
+  type BilledParty = {
     name: string
     phone?: string | null
     email?: string | null
@@ -76,7 +77,8 @@ export async function GET(
   }
   type Salesperson = { name: string | null; phone?: string | null }
 
-  const customer = invoice.customer as Customer | null
+  // Use customer first; fall back to lead if no customer linked
+  const customer = (invoice.customer as BilledParty | null) ?? (invoice.lead as BilledParty | null)
   const salesperson = invoice.salesperson as Salesperson | null
 
   const itemRows = items
@@ -90,8 +92,16 @@ export async function GET(
       <tr>
         <td style="padding:8px 12px;border-bottom:1px solid #f0f0f0;font-size:12px;color:#666">${idx + 1}</td>
         <td style="padding:8px 12px;border-bottom:1px solid #f0f0f0">
-          <div style="font-size:13px;font-weight:500;color:#111">${item.name ?? '—'}</div>
-          ${item.sku ? `<div style="font-size:11px;color:#888;font-family:monospace">${item.sku}</div>` : ''}
+          <div style="display:flex;align-items:center;gap:10px">
+            ${item.image_url
+              ? `<img src="${item.image_url}" alt="" style="width:96px;height:96px;object-fit:cover;border-radius:8px;border:1px solid #e8e8e8;flex-shrink:0" />`
+              : `<div style="width:96px;height:96px;border-radius:8px;background:#f4f4f4;border:1px solid #e8e8e8;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:10px;color:#aaa">IMG</div>`
+            }
+            <div>
+              <div style="font-size:13px;font-weight:500;color:#111">${item.name ?? '—'}</div>
+              ${item.sku ? `<div style="font-size:11px;color:#888;font-family:monospace">${item.sku}</div>` : ''}
+            </div>
+          </div>
         </td>
         <td style="padding:8px 12px;border-bottom:1px solid #f0f0f0;text-align:right;font-size:13px">${item.qty ?? 0}</td>
         <td style="padding:8px 12px;border-bottom:1px solid #f0f0f0;text-align:right;font-size:13px">${formatCurrencyHtml(item.unit_price)}</td>
@@ -215,8 +225,24 @@ export async function GET(
   </style>
 </head>
 <body>
-  <!-- Print button (hidden in print) -->
-  <div class="no-print" style="text-align:right;margin-bottom:20px">
+  <!-- Toolbar (hidden in print) -->
+  <div class="no-print" style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;gap:12px;flex-wrap:wrap">
+    <div style="display:flex;align-items:center;gap:8px">
+      <span style="font-size:13px;color:#555;font-weight:500">Payment:</span>
+      <select id="paymentSelect" style="padding:6px 12px;border:1px solid #ddd;border-radius:8px;font-size:13px;color:#111;background:#fff">
+        <option value="Pending" ${invoice.payment_status === 'Pending' ? 'selected' : ''}>Pending</option>
+        <option value="Partially Paid" ${invoice.payment_status === 'Partially Paid' ? 'selected' : ''}>Partially Paid</option>
+        <option value="Paid" ${invoice.payment_status === 'Paid' ? 'selected' : ''}>Paid</option>
+      </select>
+      <button
+        onclick="updatePayment()"
+        id="updatePaymentBtn"
+        style="padding:6px 16px;background:#1D4ED8;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer"
+      >
+        Update
+      </button>
+      <span id="paymentMsg" style="font-size:12px;color:#1D4ED8;display:none">✓ Saved</span>
+    </div>
     <button
       onclick="window.print()"
       style="padding:8px 20px;background:#111;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer"
@@ -228,7 +254,7 @@ export async function GET(
   <!-- Invoice Header -->
   <div class="invoice-header">
     <div>
-      <div class="company-name">Jangir Brothers</div>
+      <div class="company-name">Jangid Brothers</div>
       <div class="company-tagline">Complete Furniture Retail</div>
     </div>
     <div style="text-align:right">
@@ -314,7 +340,7 @@ export async function GET(
 
   <!-- Footer -->
   <div class="footer">
-    <p>Thank you for your business — Jangir Brothers Furniture</p>
+    <p>Thank you for your business — Jangid Brothers Furniture</p>
     <p style="margin-top:4px">This is a computer-generated invoice and does not require a signature.</p>
   </div>
 
@@ -322,6 +348,41 @@ export async function GET(
     // Auto-print on load if ?print=1 is in the URL
     if (new URLSearchParams(window.location.search).get('print') === '1') {
       window.addEventListener('load', () => window.print())
+    }
+
+    async function updatePayment() {
+      const select = document.getElementById('paymentSelect')
+      const btn = document.getElementById('updatePaymentBtn')
+      const msg = document.getElementById('paymentMsg')
+      const status = select.value
+      btn.disabled = true
+      btn.textContent = '...'
+      try {
+        const res = await fetch('/api/invoices/${id}/payment', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ status }),
+        })
+        if (res.ok) {
+          msg.style.display = 'inline'
+          btn.textContent = 'Update'
+          // update badge color on page
+          const badge = document.querySelector('.payment-status')
+          if (badge) {
+            const colors = { 'Paid': '#059669', 'Partially Paid': '#2563eb', 'Pending': '#d97706' }
+            badge.style.color = colors[status] || '#666'
+            badge.style.borderColor = colors[status] || '#666'
+            badge.textContent = status
+          }
+          setTimeout(() => { msg.style.display = 'none' }, 2500)
+        } else {
+          alert('Failed to update payment status. Please try from the invoice page.')
+        }
+      } catch(e) {
+        alert('Network error. Please try from the invoice page.')
+      }
+      btn.disabled = false
+      btn.textContent = 'Update'
     }
   </script>
 </body>

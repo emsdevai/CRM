@@ -28,9 +28,10 @@ import {
   searchProducts,
   type QuotationItemInput,
 } from '@/lib/actions/quotations'
+import { getActiveOffers } from '@/lib/actions/offers'
 import { QuotationStageBadge } from '@/components/shared/status-badge'
 import { StageBadge } from '@/components/shared/status-badge'
-import type { Lead, Customer, Product, LeadStage } from '@/lib/types/database'
+import type { Lead, Customer, Product, LeadStage, Offer } from '@/lib/types/database'
 
 // =============================================================================
 // Types
@@ -47,6 +48,7 @@ interface QuoteItem {
   qty: number
   discount_pct: number
   gst_pct: number
+  applied_offer_title?: string // set when an offer pre-fills the discount
   // calculated
   line_base: number
   line_discount: number
@@ -479,6 +481,12 @@ export default function QuotationBuilder({
   // ─── Saving ───────────────────────────────────────────────────────────────
   const [saving, setSaving] = useState<'draft' | 'submit' | null>(null)
 
+  // ─── Active offers (fetched once on mount) ────────────────────────────────
+  const [activeOffers, setActiveOffers] = useState<Offer[]>([])
+  useEffect(() => {
+    getActiveOffers().then(({ data }) => setActiveOffers(data ?? []))
+  }, [])
+
   // ─── Lead search debounce ─────────────────────────────────────────────────
   useEffect(() => {
     if (!leadOpen) return
@@ -543,6 +551,23 @@ export default function QuotationBuilder({
   // ─── Item mutation helpers ─────────────────────────────────────────────────
 
   const addProductItem = useCallback((product: Product) => {
+    // Find the first active offer that applies to this product's category
+    // (null category on offer = applies to all categories)
+    const matchedOffer = activeOffers.find(
+      (o) => o.category === null || o.category === product.category,
+    ) ?? null
+
+    let offerDiscount = 0
+    if (matchedOffer) {
+      if (matchedOffer.discount_type === 'percentage') {
+        offerDiscount = matchedOffer.discount_value ?? 0
+      } else if (matchedOffer.discount_type === 'flat' && product.price > 0) {
+        offerDiscount = Math.round(((matchedOffer.discount_value ?? 0) / product.price) * 100 * 100) / 100
+      }
+      // Cap at user's max allowed discount
+      offerDiscount = Math.min(offerDiscount, discountRule.max_pct)
+    }
+
     setItems((prev) => [
       ...prev,
       buildQuoteItem({
@@ -553,11 +578,12 @@ export default function QuotationBuilder({
         image_url: product.image_url ?? '',
         unit_price: product.price,
         gst_pct: product.gst_pct,
-        discount_pct: 0,
+        discount_pct: offerDiscount,
         qty: 1,
+        applied_offer_title: matchedOffer && offerDiscount > 0 ? matchedOffer.title : undefined,
       }),
     ])
-  }, [])
+  }, [activeOffers, discountRule.max_pct])
 
   const addCustomItem = useCallback((
     data: Pick<QuoteItem, 'name' | 'unit_price' | 'qty' | 'discount_pct' | 'gst_pct'>,
@@ -1075,6 +1101,11 @@ function LineItemRow({
             %
           </span>
         </div>
+        {item.applied_offer_title && item.discount_pct > 0 && (
+          <p className="text-[10px] text-emerald-600 mt-0.5 truncate max-w-[80px]" title={item.applied_offer_title}>
+            🏷 {item.applied_offer_title}
+          </p>
+        )}
       </td>
 
       {/* GST% */}

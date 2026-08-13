@@ -197,6 +197,75 @@ export async function getProductByBarcode(code: string): Promise<{
 }
 
 // ---------------------------------------------------------------------------
+// createCustomizedProduct — no barcode, stores extra fields in metadata
+// ---------------------------------------------------------------------------
+import type { CustomizedProductMeta } from '@/lib/types/database'
+
+export async function createCustomizedProduct(payload: {
+  name: string
+  category?: string | null
+  subcategory?: string | null
+  family?: string | null
+  description?: string | null
+  price: number
+  cost?: number | null
+  gst_pct: number
+  metadata: CustomizedProductMeta
+}): Promise<{ data: Product | null; error: string | null }> {
+  try {
+    const { supabase, user, profile } = await getCurrentUserProfile()
+    if (!user || !profile) return { data: null, error: 'Not authenticated' }
+
+    if (profile.role === 'salesperson') {
+      return { data: null, error: 'Insufficient permissions' }
+    }
+
+    // Generate a SKU like CUST-260813-001
+    const today = new Date()
+    const datePart = today.toISOString().slice(2, 10).replace(/-/g, '')
+    const { count } = await supabase
+      .from('products')
+      .select('id', { count: 'exact', head: true })
+      .eq('type', 'customized')
+    const seq = String((count ?? 0) + 1).padStart(3, '0')
+    const sku = `CUST-${datePart}-${seq}`
+
+    const insert = {
+      sku,
+      barcode: null,
+      name: payload.name,
+      category: payload.category || null,
+      subcategory: payload.subcategory || null,
+      family: payload.family || null,
+      type: 'customized' as const,
+      price: payload.price,
+      cost: payload.cost ?? null,
+      gst_pct: payload.gst_pct,
+      margin_pct: null,
+      stock: 0,
+      reorder_level: 0,
+      image_url: null,
+      description: payload.description || null,
+      metadata: payload.metadata,
+      created_by: user.id,
+    }
+
+    const { data, error } = await supabase
+      .from('products')
+      .insert(insert)
+      .select()
+      .single()
+
+    if (error) return { data: null, error: error.message }
+
+    revalidatePath('/inventory')
+    return { data: data as Product, error: null }
+  } catch (err) {
+    return { data: null, error: err instanceof Error ? err.message : 'Unknown error' }
+  }
+}
+
+// ---------------------------------------------------------------------------
 // createProduct
 // ---------------------------------------------------------------------------
 export async function createProduct(payload: Omit<ProductInsert, 'created_by'>): Promise<{
@@ -223,6 +292,7 @@ export async function createProduct(payload: Omit<ProductInsert, 'created_by'>):
       type: payload.type || null,
       cost: payload.cost ?? null,      // already checked role !== 'salesperson' above
       margin_pct: payload.margin_pct ?? null,
+      metadata: payload.metadata ?? null,
     }
 
     const { data, error } = await supabase
@@ -425,6 +495,7 @@ export async function bulkImportProducts(rows: BulkImportRow[]): Promise<{
         reorder_level: row.reorder_level != null ? Math.max(0, Math.floor(Number(row.reorder_level))) : 5,
         image_url: null,
         description: row.description?.trim() || null,
+        metadata: null,
         created_by: user.id,
       })
     }

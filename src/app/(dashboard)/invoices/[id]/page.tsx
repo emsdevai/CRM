@@ -8,6 +8,7 @@ import { PageHeader } from '@/components/shared/page-header'
 import { PaymentBadge } from '@/components/shared/status-badge'
 import { formatCurrency, formatDate } from '@/lib/utils'
 import { PaymentStatusUpdater } from '@/components/invoices/payment-status-updater'
+import { InvoiceAdminActions } from '@/components/invoices/invoice-admin-actions'
 import type { InvoiceItem } from '@/lib/types/database'
 
 interface PageProps {
@@ -20,6 +21,13 @@ export default async function InvoiceDetailPage({ params }: PageProps) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
+
+  const { data: profileData } = await supabase
+    .from('profiles')
+    .select('role')
+    .eq('id', user.id)
+    .single()
+  const role = profileData?.role ?? 'salesperson'
 
   const { data: invoice, error } = await getInvoiceById(id)
   if (error || !invoice) notFound()
@@ -53,6 +61,13 @@ export default async function InvoiceDetailPage({ params }: PageProps) {
               <Printer className="w-3.5 h-3.5" />
               Print
             </Link>
+            {role === 'admin' && (
+              <InvoiceAdminActions
+                invoiceId={id}
+                invoiceNo={invoice.invoice_no}
+                afterDelete="list"
+              />
+            )}
           </div>
         }
       />
@@ -63,7 +78,7 @@ export default async function InvoiceDetailPage({ params }: PageProps) {
         <div className="flex items-start justify-between gap-4 px-6 py-5 border-b border-zinc-100 dark:border-zinc-800 bg-zinc-50/40 dark:bg-zinc-800/20">
           <div>
             <h1 className="text-xl font-bold text-zinc-900 dark:text-zinc-100">
-              Jangir Brothers
+              Jangid Brothers
             </h1>
             <p className="text-sm text-zinc-500 mt-0.5">Complete Furniture Retail</p>
           </div>

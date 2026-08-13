@@ -156,6 +156,39 @@ export async function getInvoiceStats() {
 // UPDATE
 // ---------------------------------------------------------------------------
 
+// ---------------------------------------------------------------------------
+// DELETE (admin only)
+// ---------------------------------------------------------------------------
+
+export async function deleteInvoice(id: string): Promise<{ error: string | null }> {
+  try {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return { error: 'Unauthorized' }
+
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', user.id)
+      .single()
+
+    if (!profile || profile.role !== 'admin') {
+      return { error: 'Only admins can delete invoices' }
+    }
+
+    await supabase.from('invoice_items').delete().eq('invoice_id', id)
+
+    const { error } = await supabase.from('invoices').delete().eq('id', id)
+    if (error) return { error: error.message }
+
+    revalidatePath('/invoices')
+    revalidatePath('/dashboard')
+    return { error: null }
+  } catch {
+    return { error: 'Unexpected error' }
+  }
+}
+
 export async function updatePaymentStatus(
   id: string,
   status: PaymentStatus,

@@ -1,4 +1,6 @@
 import Link from 'next/link'
+import Image from 'next/image'
+import { Package } from 'lucide-react'
 import { PageHeader } from '@/components/shared/page-header'
 import { SalesChart } from '@/components/analytics/sales-chart'
 import { CategoryPie } from '@/components/analytics/category-pie'
@@ -18,7 +20,7 @@ import { formatCurrency } from '@/lib/utils'
 // Category colours
 // ---------------------------------------------------------------------------
 const CATEGORY_COLORS: Record<string, string> = {
-  'Living Room': '#10b981',
+  'Living Room': '#0ea5e9',
   Bedroom:       '#3b82f6',
   Dining:        '#f59e0b',
   Office:        '#8b5cf6',
@@ -29,7 +31,7 @@ const CATEGORY_COLORS: Record<string, string> = {
 }
 
 const SOURCE_COLORS = [
-  '#10b981', '#3b82f6', '#f59e0b', '#8b5cf6',
+  '#1D4ED8', '#0ea5e9', '#f59e0b', '#8b5cf6',
   '#06b6d4', '#ec4899', '#f97316', '#a1a1aa',
 ]
 
@@ -103,6 +105,7 @@ function InventorySection({
     stock: number
     reorder_level: number
     category: string | null
+    image_url: string | null
   }>
 }) {
   const STATUS_COLORS: Record<string, string> = {
@@ -173,10 +176,27 @@ function InventorySection({
                   {lowStock.map((p) => (
                     <tr key={p.id} className="hover:bg-zinc-50/50 transition-colors">
                       <td className="px-5 py-2.5">
-                        <p className="text-sm font-medium text-zinc-900 leading-tight truncate max-w-[160px]">
-                          {p.name}
-                        </p>
-                        <p className="text-xs text-zinc-400">{p.sku}</p>
+                        <div className="flex items-center gap-2.5">
+                          <div className="w-8 h-8 rounded-md overflow-hidden bg-zinc-100 flex-shrink-0 flex items-center justify-center border border-zinc-100">
+                            {p.image_url ? (
+                              <Image
+                                src={p.image_url}
+                                alt={p.name}
+                                width={32}
+                                height={32}
+                                className="w-full h-full object-cover"
+                              />
+                            ) : (
+                              <Package className="w-3.5 h-3.5 text-zinc-300" />
+                            )}
+                          </div>
+                          <div className="min-w-0">
+                            <p className="text-sm font-medium text-zinc-900 leading-tight truncate max-w-[120px]">
+                              {p.name}
+                            </p>
+                            <p className="text-xs text-zinc-400">{p.sku}</p>
+                          </div>
+                        </div>
                       </td>
                       <td className="px-5 py-2.5 text-right">
                         <span
@@ -241,8 +261,25 @@ async function BestSellersSection() {
                   {String(idx + 1).padStart(2, '0')}
                 </td>
                 <td className="px-5 py-3">
-                  <p className="text-sm font-medium text-zinc-900">{p.name}</p>
-                  <p className="text-xs text-zinc-400">{p.sku}</p>
+                  <div className="flex items-center gap-3">
+                    <div className="w-9 h-9 rounded-lg overflow-hidden bg-zinc-100 flex-shrink-0 flex items-center justify-center border border-zinc-100">
+                      {p.image_url ? (
+                        <Image
+                          src={p.image_url}
+                          alt={p.name}
+                          width={36}
+                          height={36}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <Package className="w-4 h-4 text-zinc-300" />
+                      )}
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-zinc-900">{p.name}</p>
+                      <p className="text-xs text-zinc-400">{p.sku}</p>
+                    </div>
+                  </div>
                 </td>
                 <td className="px-5 py-3 hidden sm:table-cell text-sm text-zinc-500">
                   {p.category ?? '—'}
@@ -250,7 +287,7 @@ async function BestSellersSection() {
                 <td className="px-5 py-3 text-right text-sm font-semibold text-zinc-900 tabular-nums">
                   {formatCurrency(p.price)}
                 </td>
-                <td className="px-5 py-3 text-right text-sm font-bold text-green-600 tabular-nums">
+                <td className="px-5 py-3 text-right text-sm font-bold text-blue-600 tabular-nums">
                   {p.sold_count}
                 </td>
                 <td className="px-5 py-3 text-right hidden md:table-cell text-sm text-zinc-600 tabular-nums">

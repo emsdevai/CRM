@@ -100,7 +100,7 @@ export function LeadPipeline({ leads }: LeadPipelineProps) {
                     key={lead.id}
                     type="button"
                     onClick={() => router.push(`/leads/${lead.id}`)}
-                    className="w-full text-left bg-white rounded-xl border border-zinc-200 p-3 hover:border-green-300 hover:shadow-sm transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-700"
+                    className="w-full text-left bg-white rounded-xl border border-zinc-200 p-3 hover:border-blue-300 hover:shadow-sm transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-700"
                   >
                     {/* Lead Name */}
                     <p className="text-sm font-semibold text-zinc-900 truncate mb-0.5">
@@ -121,7 +121,7 @@ export function LeadPipeline({ leads }: LeadPipelineProps) {
                         </span>
                       )}
                       {lead.estimated_value != null && lead.estimated_value > 0 && (
-                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium bg-green-50 text-green-700">
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium bg-blue-50 text-blue-700">
                           {formatCurrency(lead.estimated_value)}
                         </span>
                       )}

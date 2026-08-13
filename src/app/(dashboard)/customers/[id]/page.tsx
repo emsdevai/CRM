@@ -15,6 +15,7 @@ import { PageHeader } from '@/components/shared/page-header'
 import { PaymentBadge } from '@/components/shared/status-badge'
 import { formatCurrency, formatDate, getInitials } from '@/lib/utils'
 import { cn } from '@/lib/utils'
+import { CustomerAdminActions } from '@/components/customers/customer-admin-actions'
 import type { Customer, Invoice, Lead, Profile } from '@/lib/types/database'
 
 interface CustomerDetailPageProps {
@@ -188,11 +189,16 @@ export default async function CustomerDetailPage({
           { label: customer.name },
         ]}
         actions={
-          customer.customer_number ? (
-            <span className="inline-flex items-center px-2.5 py-1 text-xs font-mono font-semibold text-zinc-600 bg-zinc-100 rounded-lg border border-zinc-200">
-              {customer.customer_number}
-            </span>
-          ) : undefined
+          <div className="flex items-center gap-2">
+            {customer.customer_number && (
+              <span className="inline-flex items-center px-2.5 py-1 text-xs font-mono font-semibold text-zinc-600 bg-zinc-100 rounded-lg border border-zinc-200">
+                {customer.customer_number}
+              </span>
+            )}
+            {profile.role === 'admin' && (
+              <CustomerAdminActions customer={customer} />
+            )}
+          </div>
         }
       />
 
@@ -239,7 +245,7 @@ export default async function CustomerDetailPage({
                   value={
                     <a
                       href={`tel:${customer.phone}`}
-                      className="text-green-700 hover:underline"
+                      className="text-blue-700 hover:underline"
                     >
                       {customer.phone}
                     </a>
@@ -253,7 +259,7 @@ export default async function CustomerDetailPage({
                   value={
                     <a
                       href={`mailto:${customer.email}`}
-                      className="text-green-700 hover:underline truncate block"
+                      className="text-blue-700 hover:underline truncate block"
                     >
                       {customer.email}
                     </a>
@@ -282,7 +288,7 @@ export default async function CustomerDetailPage({
                   label="Salesperson"
                   value={
                     <div className="flex items-center gap-2">
-                      <div className="w-5 h-5 rounded-full bg-green-100 text-green-700 text-[10px] font-bold flex items-center justify-center">
+                      <div className="w-5 h-5 rounded-full bg-blue-100 text-blue-700 text-[10px] font-bold flex items-center justify-center">
                         {getInitials(salesperson.name)}
                       </div>
                       <span>
@@ -409,7 +415,7 @@ export default async function CustomerDetailPage({
                       >
                         {/* Invoice number */}
                         <div>
-                          <span className="text-xs font-mono font-semibold text-green-700">
+                          <span className="text-xs font-mono font-semibold text-blue-700">
                             {invoice.invoice_no}
                           </span>
                         </div>
@@ -467,7 +473,7 @@ export default async function CustomerDetailPage({
                 {interestedCategories.map(cat => (
                   <span
                     key={cat}
-                    className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-50 text-green-700 border border-green-200"
+                    className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-50 text-blue-700 border border-blue-200"
                   >
                     {cat}
                   </span>

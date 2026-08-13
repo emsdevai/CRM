@@ -8,6 +8,7 @@ import {
   FileText,
   Users,
   UserCheck,
+  UserCog,
   Package,
   Tag,
   Scan,
@@ -34,6 +35,7 @@ const ICON_MAP: Record<string, LucideIcon> = {
   FileText,
   Users,
   UserCheck,
+  UserCog,
   Package,
   Tag,
   Scan,
@@ -80,7 +82,8 @@ export function Sidebar({ profile, isOpen, onClose }: SidebarProps) {
       {/* Sidebar panel */}
       <aside
         className={cn(
-          'fixed inset-y-0 left-0 z-50 flex w-64 flex-col bg-zinc-950',
+          'fixed inset-y-0 left-0 z-50 flex w-64 flex-col',
+          'bg-gradient-to-b from-[#1a1f35] to-[#0f1225]',
           'transition-transform duration-300 ease-in-out',
           // Desktop: always visible, not fixed
           'lg:static lg:z-auto lg:translate-x-0',
@@ -90,7 +93,7 @@ export function Sidebar({ profile, isOpen, onClose }: SidebarProps) {
         aria-label="Sidebar navigation"
       >
         {/* ── Brand header ───────────────────────────────────────────── */}
-        <div className="flex items-center justify-between px-5 py-[18px] border-b border-zinc-800 flex-shrink-0">
+        <div className="flex items-center justify-between px-5 py-[18px] border-b border-white/10 flex-shrink-0">
           <div className="flex items-center gap-3 min-w-0">
             <span
               className="text-2xl leading-none select-none"
@@ -101,9 +104,9 @@ export function Sidebar({ profile, isOpen, onClose }: SidebarProps) {
             </span>
             <div className="min-w-0">
               <p className="text-white font-bold text-sm leading-tight truncate">
-                Jangir Brothers
+                Jangid Brothers
               </p>
-              <p className="text-zinc-400 text-xs leading-tight mt-0.5">
+              <p className="text-slate-400 text-xs leading-tight mt-0.5">
                 CRM Suite
               </p>
             </div>
@@ -115,9 +118,9 @@ export function Sidebar({ profile, isOpen, onClose }: SidebarProps) {
             onClick={onClose}
             className={cn(
               'lg:hidden flex-shrink-0 p-1.5 rounded-lg',
-              'text-zinc-400 hover:text-white hover:bg-zinc-800',
+              'text-slate-400 hover:text-white hover:bg-white/10',
               'transition-colors focus-visible:outline-none',
-              'focus-visible:ring-2 focus-visible:ring-green-500',
+              'focus-visible:ring-2 focus-visible:ring-blue-400',
             )}
             aria-label="Close navigation"
           >
@@ -147,17 +150,17 @@ export function Sidebar({ profile, isOpen, onClose }: SidebarProps) {
                 className={cn(
                   'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium',
                   'transition-colors focus-visible:outline-none',
-                  'focus-visible:ring-2 focus-visible:ring-green-500',
+                  'focus-visible:ring-2 focus-visible:ring-blue-400',
                   isActive
-                    ? 'bg-zinc-800 text-green-400'
-                    : 'text-zinc-400 hover:text-white hover:bg-zinc-800/50',
+                    ? 'bg-white/10 text-white'
+                    : 'text-slate-400 hover:text-white hover:bg-white/8',
                 )}
               >
                 <Icon
                   size={16}
                   className={cn(
                     'flex-shrink-0',
-                    isActive ? 'text-green-400' : 'text-zinc-400',
+                    isActive ? 'text-blue-400' : 'text-slate-500',
                   )}
                   aria-hidden="true"
                 />
@@ -168,11 +171,11 @@ export function Sidebar({ profile, isOpen, onClose }: SidebarProps) {
         </nav>
 
         {/* ── User section ───────────────────────────────────────────── */}
-        <div className="border-t border-zinc-800 px-3 py-4 flex-shrink-0">
+        <div className="border-t border-white/10 px-3 py-4 flex-shrink-0">
           {/* Avatar + name + role */}
           <div className="flex items-center gap-3 px-2 mb-3">
             <div
-              className="w-9 h-9 rounded-full bg-green-700 flex items-center justify-center flex-shrink-0"
+              className="w-9 h-9 rounded-full bg-white/15 flex items-center justify-center flex-shrink-0"
               aria-hidden="true"
             >
               <span className="text-white text-sm font-semibold leading-none">
@@ -198,10 +201,10 @@ export function Sidebar({ profile, isOpen, onClose }: SidebarProps) {
               type="submit"
               className={cn(
                 'w-full flex items-center gap-3 px-3 py-2 rounded-lg',
-                'text-sm font-medium text-zinc-400',
-                'hover:text-white hover:bg-zinc-800/50',
+                'text-sm font-medium text-slate-400',
+                'hover:text-white hover:bg-white/8',
                 'transition-colors focus-visible:outline-none',
-                'focus-visible:ring-2 focus-visible:ring-green-500',
+                'focus-visible:ring-2 focus-visible:ring-blue-400',
               )}
             >
               <LogOut size={16} className="flex-shrink-0" aria-hidden="true" />

@@ -72,7 +72,7 @@ function Field({
 const inputCls = cn(
   'w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm',
   'placeholder:text-zinc-400 text-zinc-900',
-  'focus:outline-none focus:ring-2 focus:ring-green-600/20 focus:border-green-600',
+  'focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600',
   'disabled:opacity-50 disabled:bg-zinc-50',
 )
 
@@ -276,7 +276,7 @@ export function TeamMemberForm({
           disabled={submitting}
           className={cn(
             'flex items-center gap-2 px-4 py-2 text-sm font-medium',
-            'text-white bg-green-600 hover:bg-green-700 rounded-lg',
+            'text-white bg-blue-600 hover:bg-blue-700 rounded-lg',
             'transition-colors disabled:opacity-50',
           )}
         >

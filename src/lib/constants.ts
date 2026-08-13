@@ -1,5 +1,5 @@
 // =============================================================================
-// Jangir Brothers CRM — Application Constants
+// Jangid Brothers CRM — Application Constants
 // =============================================================================
 
 export interface NavItem {
@@ -42,6 +42,11 @@ export const NAV_ITEMS: NavItem[] = [
     icon:  'Package',
   },
   {
+    label: 'Scan & Quote',
+    href:  '/scan',
+    icon:  'Scan',
+  },
+  {
     label: 'Catalog',
     href:  '/catalog',
     icon:  'LayoutGrid',
@@ -53,6 +58,11 @@ export const NAV_ITEMS: NavItem[] = [
     managerUp: true,
   },
   {
+    label: 'HR',
+    href:  '/hr',
+    icon:  'UserCog',
+  },
+  {
     label: 'Admin',
     href:  '/admin',
     icon:  'Settings',
@@ -60,7 +70,7 @@ export const NAV_ITEMS: NavItem[] = [
   },
 ]
 
-export const APP_NAME = 'Jangir Brothers CRM'
+export const APP_NAME = 'Jangid Brothers CRM'
 export const APP_TAGLINE = 'Complete Furniture Retail Management'
 
 // ---------------------------------------------------------------------------

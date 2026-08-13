@@ -88,8 +88,8 @@ export function SalesChart({
           >
             <defs>
               <linearGradient id="salesGradient" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#16a34a" stopOpacity={0.18} />
-                <stop offset="95%" stopColor="#16a34a" stopOpacity={0} />
+                <stop offset="5%" stopColor="#1D4ED8" stopOpacity={0.15} />
+                <stop offset="95%" stopColor="#1D4ED8" stopOpacity={0} />
               </linearGradient>
             </defs>
 
@@ -111,7 +111,7 @@ export function SalesChart({
             <Tooltip
               content={<CustomTooltip />}
               cursor={{
-                stroke: '#16a34a',
+                stroke: '#1D4ED8',
                 strokeWidth: 1,
                 strokeDasharray: '4 4',
               }}
@@ -119,11 +119,11 @@ export function SalesChart({
             <Area
               type="monotone"
               dataKey="revenue"
-              stroke="#16a34a"
+              stroke="#1D4ED8"
               strokeWidth={2}
               fill="url(#salesGradient)"
               dot={false}
-              activeDot={{ r: 4, fill: '#16a34a', strokeWidth: 0 }}
+              activeDot={{ r: 4, fill: '#1D4ED8', strokeWidth: 0 }}
             />
           </AreaChart>
         </ResponsiveContainer>

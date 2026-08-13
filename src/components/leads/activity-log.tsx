@@ -25,8 +25,8 @@ const TYPE_CONFIG: Record<
 > = {
   created: {
     icon: CheckCircle2,
-    bg: 'bg-green-100',
-    iconCls: 'text-green-600',
+    bg: 'bg-blue-100',
+    iconCls: 'text-blue-600',
     label: 'Lead Created',
   },
   call: {
@@ -116,7 +116,7 @@ export function ActivityLog({
           className={cn(
             'w-full px-3 py-2 rounded-lg border border-zinc-300 text-sm text-zinc-900',
             'placeholder:text-zinc-400 bg-white outline-none resize-none',
-            'focus:ring-2 focus:ring-green-700/25 focus:border-green-700 transition-shadow',
+            'focus:ring-2 focus:ring-blue-700/25 focus:border-blue-700 transition-shadow',
             'disabled:opacity-60',
           )}
           onKeyDown={e => {
@@ -133,7 +133,7 @@ export function ActivityLog({
             disabled={isPending || !note.trim()}
             className={cn(
               'inline-flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-white',
-              'bg-green-700 hover:bg-green-800 rounded-lg transition-colors',
+              'bg-blue-700 hover:bg-blue-800 rounded-lg transition-colors',
               'disabled:opacity-50 disabled:cursor-not-allowed',
             )}
           >

@@ -737,6 +737,47 @@ export async function convertToInvoice(
   }
 }
 
+// ---------------------------------------------------------------------------
+// DELETE (admin only)
+// ---------------------------------------------------------------------------
+
+export async function deleteQuotation(id: string): Promise<{ error: string | null }> {
+  try {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return { error: 'Unauthorized' }
+
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', user.id)
+      .single()
+
+    if (!profile || profile.role !== 'admin') {
+      return { error: 'Only admins can delete quotations' }
+    }
+
+    const { data: quotation } = await supabase
+      .from('quotations')
+      .select('lead_id')
+      .eq('id', id)
+      .single()
+
+    // Items cascade on delete; belt-and-suspenders delete anyway
+    await supabase.from('quotation_items').delete().eq('quotation_id', id)
+
+    const { error } = await supabase.from('quotations').delete().eq('id', id)
+    if (error) return { error: error.message }
+
+    revalidatePath('/quotations')
+    if (quotation?.lead_id) revalidatePath(`/leads/${quotation.lead_id}`)
+    revalidatePath('/dashboard')
+    return { error: null }
+  } catch {
+    return { error: 'Unexpected error' }
+  }
+}
+
 export async function updateQuotationStage(
   id: string,
   stage: QuotationStage,

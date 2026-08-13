@@ -221,7 +221,7 @@ export function CsvImport({ onComplete }: CsvImportProps) {
             className={cn(
               'flex flex-col items-center justify-center gap-3',
               'border-2 border-dashed border-zinc-300 rounded-xl p-10',
-              'cursor-pointer hover:border-green-600 hover:bg-green-50/50',
+              'cursor-pointer hover:border-blue-600 hover:bg-blue-50/50',
               'transition-colors text-center',
             )}
           >
@@ -377,7 +377,7 @@ export function CsvImport({ onComplete }: CsvImportProps) {
               type="button"
               onClick={handleImport}
               disabled={state.rows.length === 0 || state.phase === 'importing'}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-white bg-green-700 hover:bg-green-800 active:bg-green-900 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-white bg-blue-700 hover:bg-blue-800 active:bg-blue-900 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {state.phase === 'importing' && (
                 <Loader2 className="w-4 h-4 animate-spin" />

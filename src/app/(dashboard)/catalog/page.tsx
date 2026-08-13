@@ -282,7 +282,7 @@ export default function CatalogPage() {
               <Sparkles className="w-3.5 h-3.5" />
               Active Offers
               {activeOffersCount > 0 && (
-                <span className="ml-0.5 bg-green-700 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">
+                <span className="ml-0.5 bg-blue-700 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">
                   {activeOffersCount}
                 </span>
               )}
@@ -297,7 +297,7 @@ export default function CatalogPage() {
             <select
               value={categoryFilter}
               onChange={(e) => setCategoryFilter(e.target.value)}
-              className="rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 focus:outline-none focus:ring-2 focus:ring-green-700 focus:border-green-700"
+              className="rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 focus:outline-none focus:ring-2 focus:ring-blue-700 focus:border-blue-700"
             >
               <option value="">All Categories</option>
               {FURNITURE_CATEGORIES.map((cat) => (
@@ -341,7 +341,7 @@ export default function CatalogPage() {
               <button
                 type="button"
                 onClick={() => setCreateOfferOpen(true)}
-                className="inline-flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium text-white bg-green-700 hover:bg-green-800 active:bg-green-900 transition-colors"
+                className="inline-flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium text-white bg-blue-700 hover:bg-blue-800 active:bg-blue-900 transition-colors"
               >
                 <Plus className="w-4 h-4" />
                 Create Offer
@@ -359,7 +359,7 @@ export default function CatalogPage() {
                 <button
                   type="button"
                   onClick={() => setCreateOfferOpen(true)}
-                  className="mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-white bg-green-700 hover:bg-green-800 transition-colors"
+                  className="mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-white bg-blue-700 hover:bg-blue-800 transition-colors"
                 >
                   <Plus className="w-4 h-4" />
                   Create First Offer
@@ -567,7 +567,7 @@ function OfferCard({
     <div
       className={cn(
         'bg-white rounded-xl border p-5 space-y-3 transition-shadow hover:shadow-sm',
-        offer.active ? 'border-green-200' : 'border-zinc-200 opacity-70',
+        offer.active ? 'border-blue-200' : 'border-zinc-200 opacity-70',
       )}
     >
       {/* Header */}
@@ -587,7 +587,7 @@ function OfferCard({
         </div>
 
         {offer.active && (
-          <span className="flex-shrink-0 inline-flex items-center gap-1 text-[10px] font-bold text-green-700 bg-green-100 px-2 py-0.5 rounded-full">
+          <span className="flex-shrink-0 inline-flex items-center gap-1 text-[10px] font-bold text-blue-700 bg-blue-100 px-2 py-0.5 rounded-full">
             <BadgeCheck className="w-3 h-3" />
             Active
           </span>
@@ -624,7 +624,7 @@ function OfferCard({
               checked={offer.active}
               onCheckedChange={(checked) => onToggle(checked)}
               disabled={toggling}
-              className="relative inline-flex h-5 w-9 items-center rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-700 focus-visible:ring-offset-2 data-[state=checked]:bg-green-600 data-[state=unchecked]:bg-zinc-300 disabled:opacity-50"
+              className="relative inline-flex h-5 w-9 items-center rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-700 focus-visible:ring-offset-2 data-[state=checked]:bg-blue-600 data-[state=unchecked]:bg-zinc-300 disabled:opacity-50"
             >
               <Switch.Thumb className="block h-4 w-4 rounded-full bg-white shadow-sm transition-transform data-[state=checked]:translate-x-[18px] data-[state=unchecked]:translate-x-[2px]" />
             </Switch.Root>
@@ -656,7 +656,7 @@ function OfferCard({
           <span
             className={cn(
               'text-xs font-medium',
-              offer.active ? 'text-green-700' : 'text-zinc-400',
+              offer.active ? 'text-blue-700' : 'text-zinc-400',
             )}
           >
             {offer.active ? 'Currently active' : 'Not active'}

@@ -15,6 +15,7 @@ import { QuotationStageBadge } from '@/components/shared/status-badge'
 import { formatCurrency, formatDate, formatDateTime } from '@/lib/utils'
 import { ApprovalActions } from '@/components/quotations/approval-actions'
 import { QuotationStageActions } from '@/components/quotations/quotation-stage-actions'
+import { QuotationAdminActions } from '@/components/quotations/quotation-admin-actions'
 import type { QuotationItem } from '@/lib/types/database'
 import Image from 'next/image'
 
@@ -68,6 +69,9 @@ export default async function QuotationDetailPage({ params }: PageProps) {
               >
                 Edit
               </Link>
+            )}
+            {role === 'admin' && (
+              <QuotationAdminActions quotationId={id} shortId={shortId} />
             )}
           </div>
         }

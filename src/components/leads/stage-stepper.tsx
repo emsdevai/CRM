@@ -36,7 +36,7 @@ export function StageStepper({ leadId, currentStage }: StageStepperProps) {
       <div className="flex items-center justify-between mb-3">
         <p className="text-sm font-semibold text-zinc-800">Pipeline Stage</p>
         {isPending && (
-          <Loader2 className="w-4 h-4 animate-spin text-green-700" />
+          <Loader2 className="w-4 h-4 animate-spin text-blue-700" />
         )}
       </div>
 
@@ -58,7 +58,7 @@ export function StageStepper({ leadId, currentStage }: StageStepperProps) {
                 'bg-red-50 border-red-400 text-red-700 font-semibold'
             } else {
               stateStyles =
-                'bg-green-50 border-green-400 text-green-700 font-semibold'
+                'bg-blue-50 border-blue-400 text-blue-700 font-semibold'
             }
           } else if (isPast) {
             stateStyles =
@@ -76,7 +76,7 @@ export function StageStepper({ leadId, currentStage }: StageStepperProps) {
               onClick={() => handleStageClick(stage)}
               className={cn(
                 'w-full flex items-center gap-2.5 px-3 py-2 rounded-lg border text-sm transition-colors text-left',
-                'disabled:cursor-default focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-700',
+                'disabled:cursor-default focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-700',
                 stateStyles,
               )}
             >
@@ -89,7 +89,7 @@ export function StageStepper({ leadId, currentStage }: StageStepperProps) {
                     : isCurrent && isLost
                     ? 'bg-red-500 text-white'
                     : isCurrent
-                    ? 'bg-green-700 text-white'
+                    ? 'bg-blue-700 text-white'
                     : isPast
                     ? 'bg-zinc-300 text-zinc-600'
                     : 'bg-zinc-100 text-zinc-500',

@@ -187,7 +187,7 @@ export function Topbar({ profile, onMenuToggle }: TopbarProps) {
           'lg:hidden p-2 rounded-lg',
           'text-zinc-500 hover:text-zinc-700 hover:bg-zinc-100',
           'transition-colors focus-visible:outline-none',
-          'focus-visible:ring-2 focus-visible:ring-green-700',
+          'focus-visible:ring-2 focus-visible:ring-blue-700',
         )}
         aria-label="Open navigation menu"
       >
@@ -202,7 +202,7 @@ export function Topbar({ profile, onMenuToggle }: TopbarProps) {
             'flex items-center gap-2 px-3 h-9 rounded-lg',
             'bg-zinc-50 border border-zinc-200',
             'focus-within:bg-white focus-within:border-zinc-300',
-            'focus-within:ring-2 focus-within:ring-green-700/20',
+            'focus-within:ring-2 focus-within:ring-blue-700/20',
             'transition-all',
           )}
         >
@@ -310,7 +310,7 @@ export function Topbar({ profile, onMenuToggle }: TopbarProps) {
             'p-2 rounded-lg text-zinc-500',
             'hover:text-zinc-700 hover:bg-zinc-100',
             'transition-colors focus-visible:outline-none',
-            'focus-visible:ring-2 focus-visible:ring-green-700',
+            'focus-visible:ring-2 focus-visible:ring-blue-700',
           )}
           aria-label="Notifications"
         >
@@ -320,7 +320,7 @@ export function Topbar({ profile, onMenuToggle }: TopbarProps) {
         {/* User avatar + name */}
         <div className="flex items-center gap-2.5 pl-1">
           <div
-            className="w-8 h-8 rounded-full bg-green-700 flex items-center justify-center flex-shrink-0"
+            className="w-8 h-8 rounded-full bg-blue-700 flex items-center justify-center flex-shrink-0"
             aria-hidden="true"
           >
             <span className="text-white text-xs font-semibold leading-none">

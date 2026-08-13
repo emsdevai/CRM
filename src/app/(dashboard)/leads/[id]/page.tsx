@@ -180,7 +180,7 @@ export default async function LeadDetailPage({
                 value={
                   <a
                     href={`tel:${lead.phone}`}
-                    className="text-green-700 hover:underline"
+                    className="text-blue-700 hover:underline"
                   >
                     {lead.phone}
                   </a>
@@ -193,7 +193,7 @@ export default async function LeadDetailPage({
                   value={
                     <a
                       href={`mailto:${lead.email}`}
-                      className="text-green-700 hover:underline truncate block"
+                      className="text-blue-700 hover:underline truncate block"
                     >
                       {lead.email}
                     </a>
@@ -225,7 +225,7 @@ export default async function LeadDetailPage({
                 value={
                   assignee ? (
                     <div className="flex items-center gap-2">
-                      <div className="w-5 h-5 rounded-full bg-green-100 text-green-700 text-[10px] font-bold flex items-center justify-center">
+                      <div className="w-5 h-5 rounded-full bg-blue-100 text-blue-700 text-[10px] font-bold flex items-center justify-center">
                         {getInitials(assignee.name)}
                       </div>
                       <span>{assignee.name ?? assignee.email}</span>
@@ -315,7 +315,7 @@ export default async function LeadDetailPage({
                 {lead.interested_categories.map(cat => (
                   <span
                     key={cat}
-                    className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-50 text-green-700 border border-green-200"
+                    className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-50 text-blue-700 border border-blue-200"
                   >
                     {cat}
                   </span>
@@ -340,7 +340,7 @@ export default async function LeadDetailPage({
             <div className="bg-white rounded-xl border border-zinc-200 p-4">
               <p className="text-xs text-zinc-500 mb-1">Estimated Value</p>
               <div className="flex items-center gap-2">
-                <IndianRupee className="w-5 h-5 text-green-700" />
+                <IndianRupee className="w-5 h-5 text-blue-700" />
                 <p className="text-2xl font-bold text-zinc-900 tabular-nums">
                   {formatCurrency(lead.estimated_value).replace('₹', '')}
                 </p>
@@ -374,7 +374,7 @@ export default async function LeadDetailPage({
                 <p className="text-sm text-zinc-500">No quotations yet</p>
                 <a
                   href={`/quotations/new?lead_id=${id}`}
-                  className="mt-2 inline-flex items-center text-xs font-medium text-green-700 hover:underline"
+                  className="mt-2 inline-flex items-center text-xs font-medium text-blue-700 hover:underline"
                 >
                   Create one →
                 </a>

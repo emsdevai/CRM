@@ -52,7 +52,7 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen flex">
       {/* ── Brand panel (left) ─────────────────────────────────── */}
-      <div className="hidden lg:flex lg:w-[480px] xl:w-[520px] flex-col justify-between bg-gradient-to-br from-green-800 to-green-950 p-12 relative overflow-hidden">
+      <div className="hidden lg:flex lg:w-[480px] xl:w-[520px] flex-col justify-between bg-gradient-to-br from-blue-800 to-blue-950 p-12 relative overflow-hidden">
         {/* Decorative background circles */}
         <div className="absolute inset-0 pointer-events-none">
           <div className="absolute -top-24 -left-24 w-96 h-96 rounded-full bg-white/5" />
@@ -85,9 +85,9 @@ export default function LoginPage() {
             </div>
             <div>
               <p className="text-white font-semibold text-lg leading-tight">
-                Jangir Brothers
+                Jangid Brothers
               </p>
-              <p className="text-green-300 text-sm">CRM Suite</p>
+              <p className="text-blue-300 text-sm">CRM Suite</p>
             </div>
           </div>
         </div>
@@ -99,7 +99,7 @@ export default function LoginPage() {
             <br />
             Retail Management
           </h1>
-          <p className="mt-4 text-green-200 text-lg leading-relaxed max-w-xs">
+          <p className="mt-4 text-blue-200 text-lg leading-relaxed max-w-xs">
             Manage leads, quotations, inventory, and analytics — all in one
             place.
           </p>
@@ -113,8 +113,8 @@ export default function LoginPage() {
               'Role-Based Access Control',
             ].map((feat) => (
               <div key={feat} className="flex items-center gap-3">
-                <div className="w-1.5 h-1.5 rounded-full bg-green-400 flex-shrink-0" />
-                <span className="text-green-100 text-sm">{feat}</span>
+                <div className="w-1.5 h-1.5 rounded-full bg-blue-400 flex-shrink-0" />
+                <span className="text-blue-100 text-sm">{feat}</span>
               </div>
             ))}
           </div>
@@ -122,8 +122,8 @@ export default function LoginPage() {
 
         {/* Footer */}
         <div className="relative z-10">
-          <p className="text-green-400 text-xs">
-            &copy; {new Date().getFullYear()} Jangir Brothers. All rights
+          <p className="text-blue-400 text-xs">
+            &copy; {new Date().getFullYear()} Jangid Brothers. All rights
             reserved.
           </p>
         </div>
@@ -134,12 +134,12 @@ export default function LoginPage() {
         <div className="w-full max-w-md">
           {/* Mobile logo */}
           <div className="flex items-center gap-3 mb-8 lg:hidden">
-            <div className="w-10 h-10 bg-green-700 rounded-xl flex items-center justify-center">
+            <div className="w-10 h-10 bg-blue-700 rounded-xl flex items-center justify-center">
               <Sofa className="w-5 h-5 text-white" />
             </div>
             <div>
               <p className="font-semibold text-zinc-900 text-base leading-tight">
-                Jangir Brothers CRM
+                Jangid Brothers CRM
               </p>
               <p className="text-zinc-500 text-xs">Furniture Retail Management</p>
             </div>
@@ -180,7 +180,7 @@ export default function LoginPage() {
                   className={cn(
                     'w-full px-3.5 py-2.5 rounded-lg border text-sm text-zinc-900',
                     'placeholder:text-zinc-400 bg-white outline-none transition-shadow',
-                    'focus:ring-2 focus:ring-green-700/30 focus:border-green-700',
+                    'focus:ring-2 focus:ring-blue-700/30 focus:border-blue-700',
                     errors.email
                       ? 'border-red-400 focus:ring-red-400/30 focus:border-red-500'
                       : 'border-zinc-300',
@@ -211,7 +211,7 @@ export default function LoginPage() {
                     className={cn(
                       'w-full px-3.5 py-2.5 pr-10 rounded-lg border text-sm text-zinc-900',
                       'placeholder:text-zinc-400 bg-white outline-none transition-shadow',
-                      'focus:ring-2 focus:ring-green-700/30 focus:border-green-700',
+                      'focus:ring-2 focus:ring-blue-700/30 focus:border-blue-700',
                       errors.password
                         ? 'border-red-400 focus:ring-red-400/30 focus:border-red-500'
                         : 'border-zinc-300',
@@ -245,9 +245,9 @@ export default function LoginPage() {
                 className={cn(
                   'w-full flex items-center justify-center gap-2',
                   'py-2.5 px-4 rounded-lg text-sm font-semibold text-white',
-                  'bg-green-700 hover:bg-green-800 active:bg-green-900',
+                  'bg-blue-700 hover:bg-blue-800 active:bg-blue-900',
                   'transition-colors focus-visible:outline-none',
-                  'focus-visible:ring-2 focus-visible:ring-green-700 focus-visible:ring-offset-2',
+                  'focus-visible:ring-2 focus-visible:ring-blue-700 focus-visible:ring-offset-2',
                   'disabled:opacity-60 disabled:cursor-not-allowed',
                 )}
               >
@@ -260,7 +260,7 @@ export default function LoginPage() {
           </div>
 
           <p className="mt-6 text-center text-xs text-zinc-400">
-            Jangir Brothers Furniture &mdash; Internal CRM
+            Jangid Brothers Furniture &mdash; Internal CRM
           </p>
         </div>
       </div>

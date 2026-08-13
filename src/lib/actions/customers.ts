@@ -1,6 +1,7 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
+import { revalidatePath } from 'next/cache'
 import type { Customer, CustomerWithInvoices, Profile } from '@/lib/types/database'
 
 // ---------------------------------------------------------------------------
@@ -168,6 +169,29 @@ export async function updateCustomer(
 }
 
 // ---------------------------------------------------------------------------
+// deleteCustomer (admin only)
+// ---------------------------------------------------------------------------
+export async function deleteCustomer(id: string): Promise<{ error: string | null }> {
+  try {
+    const { supabase, user, profile } = await getCurrentUserProfile()
+    if (!user || !profile) return { error: 'Not authenticated' }
+
+    if (profile.role !== 'admin') {
+      return { error: 'Only admins can delete customers' }
+    }
+
+    const { error } = await supabase.from('customers').delete().eq('id', id)
+    if (error) return { error: error.message }
+
+    revalidatePath('/customers')
+    revalidatePath('/dashboard')
+    return { error: null }
+  } catch (err) {
+    return { error: err instanceof Error ? err.message : 'Unknown error' }
+  }
+}
+
+// ---------------------------------------------------------------------------
 // getCustomerStats
 // ---------------------------------------------------------------------------
 export async function getCustomerStats(): Promise<{
@@ -203,6 +227,49 @@ export async function getCustomerStats(): Promise<{
       },
       error: null,
     }
+  } catch (err) {
+    return { data: null, error: err instanceof Error ? err.message : 'Unknown error' }
+  }
+}
+
+// ---------------------------------------------------------------------------
+// createWalkInCustomer — used from the Scan & Quote page for walk-in sales
+// ---------------------------------------------------------------------------
+export async function createWalkInCustomer(input: {
+  name: string
+  phone: string
+  email?: string
+  city?: string
+  state?: string
+}): Promise<{ data: { id: string; name: string } | null; error: string | null }> {
+  try {
+    const { supabase, user, profile } = await getCurrentUserProfile()
+    if (!user || !profile) return { data: null, error: 'Not authenticated' }
+
+    // Generate a customer number
+    const { count } = await supabase
+      .from('customers')
+      .select('id', { count: 'exact', head: true })
+
+    const custNum = `JB-WI-${new Date().toISOString().slice(2, 10).replace(/-/g, '')}${String((count ?? 0) + 1).padStart(3, '0')}`
+
+    const { data, error } = await supabase
+      .from('customers')
+      .insert({
+        customer_number: custNum,
+        name: input.name.trim(),
+        phone: input.phone.trim(),
+        email: input.email?.trim() || null,
+        city: input.city?.trim() || null,
+        state: input.state?.trim() || null,
+        total_spent: 0,
+        salesperson_id: user.id,
+      })
+      .select('id, name')
+      .single()
+
+    if (error) return { data: null, error: error.message }
+    return { data: data as { id: string; name: string }, error: null }
   } catch (err) {
     return { data: null, error: err instanceof Error ? err.message : 'Unknown error' }
   }

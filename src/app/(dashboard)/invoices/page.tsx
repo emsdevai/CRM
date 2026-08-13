@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/server'
 import { getInvoices, getInvoiceStats } from '@/lib/actions/invoices'
 import { PageHeader } from '@/components/shared/page-header'
 import { PaymentBadge } from '@/components/shared/status-badge'
+import { InvoiceAdminActions } from '@/components/invoices/invoice-admin-actions'
 import { formatCurrency, formatDate } from '@/lib/utils'
 import type { PaymentStatus } from '@/lib/types/database'
 
@@ -29,6 +30,13 @@ export default async function InvoicesPage({ searchParams }: PageProps) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
+
+  const { data: profileData } = await supabase
+    .from('profiles')
+    .select('role')
+    .eq('id', user.id)
+    .single()
+  const isAdmin = profileData?.role === 'admin'
 
   const currentPage = parseInt(page) || 1
 
@@ -221,6 +229,13 @@ export default async function InvoicesPage({ searchParams }: PageProps) {
                         >
                           PDF
                         </Link>
+                        {isAdmin && (
+                          <InvoiceAdminActions
+                            invoiceId={inv.id}
+                            invoiceNo={inv.invoice_no}
+                            afterDelete="stay"
+                          />
+                        )}
                       </div>
                     </td>
                   </tr>

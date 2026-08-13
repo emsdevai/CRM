@@ -111,7 +111,7 @@ export function LeadTable({ leads, loading, onView }: LeadTableProps) {
             <div className="hidden sm:flex items-center gap-2 min-w-0">
               {lead.assignee ? (
                 <>
-                  <div className="w-6 h-6 rounded-full bg-green-100 text-green-700 text-[10px] font-bold flex items-center justify-center flex-shrink-0">
+                  <div className="w-6 h-6 rounded-full bg-blue-100 text-blue-700 text-[10px] font-bold flex items-center justify-center flex-shrink-0">
                     {getInitials(lead.assignee.name)}
                   </div>
                   <span className="text-sm text-zinc-600 truncate">

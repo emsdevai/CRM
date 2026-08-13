@@ -53,8 +53,8 @@ export function StatCard({
         <p className="text-sm font-medium text-zinc-500 leading-tight">
           {title}
         </p>
-        <div className="w-10 h-10 bg-green-50 rounded-xl flex items-center justify-center flex-shrink-0">
-          <Icon className="w-5 h-5 text-green-700" />
+        <div className="w-10 h-10 bg-blue-50 rounded-xl flex items-center justify-center flex-shrink-0">
+          <Icon className="w-5 h-5 text-blue-700" />
         </div>
       </div>
 

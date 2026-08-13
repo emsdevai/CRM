@@ -127,7 +127,7 @@ export function LeadForm({
     cn(
       'w-full px-3 py-2 rounded-lg border text-sm text-zinc-900',
       'placeholder:text-zinc-400 bg-white outline-none transition-shadow',
-      'focus:ring-2 focus:ring-green-700/25 focus:border-green-700',
+      'focus:ring-2 focus:ring-blue-700/25 focus:border-blue-700',
       hasError
         ? 'border-red-400 focus:ring-red-400/25 focus:border-red-500'
         : 'border-zinc-300',
@@ -324,8 +324,8 @@ export function LeadForm({
                 className={cn(
                   'px-3 py-1.5 rounded-full text-sm font-medium border transition-colors',
                   active
-                    ? 'bg-green-700 text-white border-green-700'
-                    : 'bg-white text-zinc-600 border-zinc-300 hover:border-green-600 hover:text-green-700',
+                    ? 'bg-blue-700 text-white border-blue-700'
+                    : 'bg-white text-zinc-600 border-zinc-300 hover:border-blue-600 hover:text-blue-700',
                 )}
               >
                 {cat.label}
@@ -499,7 +499,7 @@ export function LeadForm({
           disabled={loading}
           className={cn(
             'flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white',
-            'bg-green-700 hover:bg-green-800 rounded-lg transition-colors',
+            'bg-blue-700 hover:bg-blue-800 rounded-lg transition-colors',
             'disabled:opacity-60 disabled:cursor-not-allowed',
           )}
         >

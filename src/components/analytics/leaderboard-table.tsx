@@ -114,8 +114,8 @@ export function LeaderboardTable({ entries, type = 'salesperson' }: LeaderboardT
                 {/* Name + Role */}
                 <td className="py-3 pr-3">
                   <div className="flex items-center gap-2.5 min-w-0">
-                    <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0">
-                      <span className="text-xs font-semibold text-green-700">
+                    <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
+                      <span className="text-xs font-semibold text-blue-700">
                         {initials}
                       </span>
                     </div>

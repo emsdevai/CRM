@@ -202,6 +202,7 @@ export function InventoryClient({
           type: values.type || null,
           cost: values.cost ?? null,
           margin_pct: values.margin_pct ?? null,
+          metadata: null,
         })
         if (error) {
           toast.error(error)
@@ -233,6 +234,7 @@ export function InventoryClient({
           type: values.type || null,
           cost: values.cost ?? null,
           margin_pct: values.margin_pct ?? null,
+          metadata: null,
         })
         if (error) {
           toast.error(error)
@@ -301,8 +303,17 @@ export function InventoryClient({
 
             <button
               type="button"
+              onClick={() => router.push('/scan?mode=custom')}
+              className="inline-flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium text-amber-700 border border-amber-300 bg-amber-50 hover:bg-amber-100 transition-colors"
+            >
+              <Plus className="w-4 h-4" />
+              Add Customised
+            </button>
+
+            <button
+              type="button"
               onClick={() => setAddOpen(true)}
-              className="inline-flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium text-white bg-green-700 hover:bg-green-800 active:bg-green-900 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-700 focus-visible:ring-offset-2"
+              className="inline-flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium text-white bg-blue-700 hover:bg-blue-800 active:bg-blue-900 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-700 focus-visible:ring-offset-2"
             >
               <Plus className="w-4 h-4" />
               Add Product
@@ -354,7 +365,7 @@ export function InventoryClient({
                 updateFilter('search', val)
               }
             }}
-            className="block w-full pl-9 pr-3 py-2 text-sm rounded-lg border border-zinc-300 bg-white text-zinc-900 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-green-700 focus:border-green-700"
+            className="block w-full pl-9 pr-3 py-2 text-sm rounded-lg border border-zinc-300 bg-white text-zinc-900 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-blue-700 focus:border-blue-700"
           />
         </div>
 
@@ -362,7 +373,7 @@ export function InventoryClient({
         <select
           value={currentFilters.category ?? ''}
           onChange={(e) => updateFilter('category', e.target.value)}
-          className="rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 focus:outline-none focus:ring-2 focus:ring-green-700 focus:border-green-700"
+          className="rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 focus:outline-none focus:ring-2 focus:ring-blue-700 focus:border-blue-700"
         >
           <option value="">All Categories</option>
           {FURNITURE_CATEGORIES.map((cat) => (
@@ -376,7 +387,7 @@ export function InventoryClient({
         <select
           value={currentFilters.type ?? ''}
           onChange={(e) => updateFilter('type', e.target.value)}
-          className="rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 focus:outline-none focus:ring-2 focus:ring-green-700 focus:border-green-700"
+          className="rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 focus:outline-none focus:ring-2 focus:ring-blue-700 focus:border-blue-700"
         >
           <option value="">All Types</option>
           {PRODUCT_TYPES.map((t) => (
@@ -390,7 +401,7 @@ export function InventoryClient({
         <select
           value={currentFilters.stockStatus ?? ''}
           onChange={(e) => updateFilter('stockStatus', e.target.value)}
-          className="rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 focus:outline-none focus:ring-2 focus:ring-green-700 focus:border-green-700"
+          className="rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 focus:outline-none focus:ring-2 focus:ring-blue-700 focus:border-blue-700"
         >
           <option value="">All Stock</option>
           <option value="in">In Stock</option>
@@ -451,7 +462,7 @@ export function InventoryClient({
             <button
               type="button"
               onClick={() => setAddOpen(true)}
-              className="mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-white bg-green-700 hover:bg-green-800 transition-colors"
+              className="mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-white bg-blue-700 hover:bg-blue-800 transition-colors"
             >
               <Plus className="w-4 h-4" />
               Add Product
@@ -647,7 +658,7 @@ function TableView({
                     <div className="min-w-0">
                       <Link
                         href={`/inventory/${product.id}`}
-                        className="text-sm font-medium text-zinc-900 hover:text-green-700 transition-colors line-clamp-1"
+                        className="text-sm font-medium text-zinc-900 hover:text-blue-700 transition-colors line-clamp-1"
                       >
                         {product.name}
                       </Link>
@@ -812,7 +823,7 @@ function GridView({
             <div>
               <Link
                 href={`/inventory/${product.id}`}
-                className="text-sm font-semibold text-zinc-900 hover:text-green-700 transition-colors line-clamp-2 leading-snug"
+                className="text-sm font-semibold text-zinc-900 hover:text-blue-700 transition-colors line-clamp-2 leading-snug"
               >
                 {product.name}
               </Link>

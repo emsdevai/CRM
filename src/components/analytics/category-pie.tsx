@@ -5,7 +5,6 @@ import {
   Pie,
   Cell,
   Tooltip,
-  Legend,
   ResponsiveContainer,
 } from 'recharts'
 import { formatCurrency } from '@/lib/utils'
@@ -22,7 +21,6 @@ interface CustomTooltipProps {
 function CustomTooltip({ active, payload }: CustomTooltipProps) {
   if (!active || !payload?.length) return null
   const entry = payload[0]
-  const total = 0 // calculated below if needed
 
   return (
     <div className="bg-white border border-zinc-200 rounded-lg px-3 py-2 shadow-md">
@@ -40,42 +38,9 @@ function CustomTooltip({ active, payload }: CustomTooltipProps) {
   )
 }
 
-interface CustomLegendProps {
-  payload?: Array<{
-    value: string
-    color: string
-    payload: { revenue: number }
-  }>
-}
-
-function CustomLegend({ payload }: CustomLegendProps) {
-  if (!payload?.length) return null
-  const total = payload.reduce((s, p) => s + (p.payload?.revenue ?? 0), 0)
-
-  return (
-    <div className="mt-3 space-y-1.5">
-      {payload.map((entry) => {
-        const pct = total > 0 ? ((entry.payload?.revenue ?? 0) / total) * 100 : 0
-        return (
-          <div key={entry.value} className="flex items-center justify-between gap-2">
-            <div className="flex items-center gap-2 min-w-0">
-              <span
-                className="w-2.5 h-2.5 rounded-sm flex-shrink-0"
-                style={{ background: entry.color }}
-              />
-              <span className="text-xs text-zinc-600 truncate">{entry.value}</span>
-            </div>
-            <span className="text-xs font-medium text-zinc-500 flex-shrink-0">
-              {pct.toFixed(1)}%
-            </span>
-          </div>
-        )
-      })}
-    </div>
-  )
-}
-
 export function CategoryPie({ data }: CategoryPieProps) {
+  const total = data.reduce((s, d) => s + d.revenue, 0)
+
   if (data.length === 0) {
     return (
       <div className="bg-white rounded-xl border border-zinc-200 p-5 h-full">
@@ -88,10 +53,12 @@ export function CategoryPie({ data }: CategoryPieProps) {
   }
 
   return (
-    <div className="bg-white rounded-xl border border-zinc-200 p-5 h-full">
-      <h3 className="text-sm font-semibold text-zinc-900 mb-2">Revenue by Category</h3>
+    <div className="bg-white rounded-xl border border-zinc-200 p-5 h-full flex flex-col">
+      <h3 className="text-sm font-semibold text-zinc-900 mb-1">Revenue by Category</h3>
+      <p className="text-xs text-zinc-400 mb-3">{formatCurrency(total)} total</p>
 
-      <ResponsiveContainer width="100%" height={180}>
+      {/* Donut — legend is outside so it gets its own space */}
+      <ResponsiveContainer width="100%" height={200}>
         <PieChart>
           <Pie
             data={data}
@@ -99,8 +66,8 @@ export function CategoryPie({ data }: CategoryPieProps) {
             nameKey="category"
             cx="50%"
             cy="50%"
-            innerRadius={48}
-            outerRadius={80}
+            innerRadius={62}
+            outerRadius={90}
             paddingAngle={2}
             strokeWidth={0}
           >
@@ -109,14 +76,29 @@ export function CategoryPie({ data }: CategoryPieProps) {
             ))}
           </Pie>
           <Tooltip content={<CustomTooltip />} />
-          <Legend
-            content={<CustomLegend />}
-            layout="vertical"
-            align="center"
-            verticalAlign="bottom"
-          />
         </PieChart>
       </ResponsiveContainer>
+
+      {/* Legend rendered below the chart — full names, no truncation */}
+      <div className="mt-4 space-y-2">
+        {data.map((entry) => {
+          const pct = total > 0 ? (entry.revenue / total) * 100 : 0
+          return (
+            <div key={entry.category} className="flex items-center justify-between gap-3">
+              <div className="flex items-center gap-2 min-w-0">
+                <span
+                  className="w-2.5 h-2.5 rounded-sm flex-shrink-0"
+                  style={{ background: entry.fill }}
+                />
+                <span className="text-xs text-zinc-600">{entry.category}</span>
+              </div>
+              <div className="flex items-center gap-2 flex-shrink-0">
+                <span className="text-xs text-zinc-400">{pct.toFixed(1)}%</span>
+              </div>
+            </div>
+          )
+        })}
+      </div>
     </div>
   )
 }

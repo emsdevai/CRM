@@ -11,9 +11,9 @@ const inter = Inter({
 })
 
 export const metadata: Metadata = {
-  title:       'Jangir Brothers CRM',
-  description: 'Complete Furniture Retail Management System for Jangir Brothers',
-  keywords:    ['CRM', 'furniture', 'retail', 'management', 'Jangir Brothers'],
+  title:       'Jangid Brothers CRM',
+  description: 'Complete Furniture Retail Management System for Jangid Brothers',
+  keywords:    ['CRM', 'furniture', 'retail', 'management', 'Jangid Brothers'],
 }
 
 export default function RootLayout({ children }: LayoutProps<'/'>) {

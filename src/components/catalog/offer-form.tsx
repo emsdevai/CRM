@@ -45,11 +45,11 @@ export function OfferForm({ offer, onSubmit, onCancel, loading }: OfferFormProps
   const inputCls = (hasError: boolean) =>
     cn(
       'block w-full rounded-lg border bg-white px-3 py-2 text-sm text-zinc-900 placeholder-zinc-400',
-      'focus:outline-none focus:ring-2 focus:ring-green-700 focus:ring-offset-0',
+      'focus:outline-none focus:ring-2 focus:ring-blue-700 focus:ring-offset-0',
       'disabled:opacity-50 disabled:cursor-not-allowed',
       hasError
         ? 'border-red-400 focus:ring-red-500'
-        : 'border-zinc-300 focus:border-green-700',
+        : 'border-zinc-300 focus:border-blue-700',
     )
 
   const labelCls = 'block text-sm font-medium text-zinc-700 mb-1'
@@ -109,7 +109,7 @@ export function OfferForm({ offer, onSubmit, onCancel, loading }: OfferFormProps
               type="radio"
               value="percentage"
               {...register('discount_type')}
-              className="w-4 h-4 text-green-700 border-zinc-300 focus:ring-green-700"
+              className="w-4 h-4 text-blue-700 border-zinc-300 focus:ring-blue-700"
             />
             <span className="flex items-center gap-1.5 text-sm text-zinc-700">
               <Percent className="w-3.5 h-3.5" />
@@ -121,7 +121,7 @@ export function OfferForm({ offer, onSubmit, onCancel, loading }: OfferFormProps
               type="radio"
               value="flat"
               {...register('discount_type')}
-              className="w-4 h-4 text-green-700 border-zinc-300 focus:ring-green-700"
+              className="w-4 h-4 text-blue-700 border-zinc-300 focus:ring-blue-700"
             />
             <span className="flex items-center gap-1.5 text-sm text-zinc-700">
               <IndianRupee className="w-3.5 h-3.5" />
@@ -221,7 +221,7 @@ export function OfferForm({ offer, onSubmit, onCancel, loading }: OfferFormProps
             {...register('active')}
             className="sr-only peer"
           />
-          <div className="w-10 h-6 bg-zinc-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-green-700 rounded-full peer peer-checked:bg-green-600 transition-colors after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-4 after:shadow-sm" />
+          <div className="w-10 h-6 bg-zinc-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-700 rounded-full peer peer-checked:bg-blue-600 transition-colors after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-4 after:shadow-sm" />
         </label>
       </div>
 
@@ -239,7 +239,7 @@ export function OfferForm({ offer, onSubmit, onCancel, loading }: OfferFormProps
         <button
           type="submit"
           disabled={loading}
-          className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-white bg-green-700 hover:bg-green-800 active:bg-green-900 transition-colors disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-700 focus-visible:ring-offset-2"
+          className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-white bg-blue-700 hover:bg-blue-800 active:bg-blue-900 transition-colors disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-700 focus-visible:ring-offset-2"
         >
           {loading && <Loader2 className="w-4 h-4 animate-spin" />}
           {offer ? 'Update Offer' : 'Create Offer'}

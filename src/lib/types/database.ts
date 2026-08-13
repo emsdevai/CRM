@@ -1,5 +1,5 @@
 // =============================================================================
-// Jangir Brothers CRM – Database Types
+// Jangid Brothers CRM – Database Types
 // Mirrors the Supabase Postgres schema exactly.
 // =============================================================================
 
@@ -100,10 +100,22 @@ export interface Product {
   reorder_level: number
   image_url: string | null
   description: string | null
+  metadata: CustomizedProductMeta | null
   sold_count: number
   created_at: string
   updated_at: string
   created_by: string | null
+}
+
+// Customized product metadata stored in the products.metadata JSONB column
+export interface CustomizedProductMeta {
+  customization_details?: string
+  color?: string
+  dimensions?: { l?: number; w?: number; h?: number; unit?: 'cm' | 'inches' }
+  pickup_charge?: number
+  installation_charge?: number
+  delivery_days?: number
+  finish?: string
 }
 
 // ---------------------------------------------------------------------------
@@ -374,3 +386,78 @@ export type InvoiceItemInsert = Omit<InvoiceItem, 'id'>
 
 export type OfferInsert = Omit<Offer, 'id' | 'created_at' | 'updated_at'>
 export type OfferUpdate = Partial<Omit<Offer, 'id' | 'created_at' | 'updated_at'>>
+
+// =============================================================================
+// HR Module Types
+// =============================================================================
+
+export type LeaveStatus = 'Pending' | 'Approved' | 'Rejected' | 'Cancelled'
+export type AttendanceStatus = 'Present' | 'Absent' | 'Half Day' | 'Late' | 'On Leave' | 'Holiday' | 'Week Off'
+
+export interface LeaveType {
+  id: string
+  name: string
+  description: string | null
+  default_days: number
+  color: string
+  created_at: string
+}
+
+export interface LeaveBalance {
+  id: string
+  employee_id: string
+  leave_type_id: string
+  year: number
+  total_days: number
+  used_days: number
+  pending_days: number
+  created_at: string
+  updated_at: string
+}
+
+export interface LeaveApplication {
+  id: string
+  employee_id: string
+  leave_type_id: string
+  start_date: string
+  end_date: string
+  days_requested: number
+  half_day: boolean
+  reason: string | null
+  status: LeaveStatus
+  reviewed_by: string | null
+  review_note: string | null
+  reviewed_at: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface AttendanceRecord {
+  id: string
+  employee_id: string
+  date: string
+  check_in: string | null
+  check_out: string | null
+  status: AttendanceStatus
+  work_hours: number | null
+  notes: string | null
+  marked_by: string | null
+  created_at: string
+  updated_at: string
+}
+
+// Extended / joined
+export interface LeaveApplicationFull extends LeaveApplication {
+  employee: { id: string; name: string | null; email: string | null; role: string } | null
+  leave_type: LeaveType | null
+  reviewer: { id: string; name: string | null } | null
+}
+
+export interface LeaveBalanceFull extends LeaveBalance {
+  leave_type: LeaveType | null
+  available_days: number   // computed: total - used - pending
+}
+
+export interface AttendanceRecordFull extends AttendanceRecord {
+  employee: { id: string; name: string | null; email: string | null } | null
+}

@@ -1,5 +1,9 @@
 @import "tailwindcss";
 
+/* Force class-based dark mode — dark: variants only fire when .dark is on <html>.
+   Since no code sets that class, the app always renders in light mode. */
+@custom-variant dark (&:where(.dark, .dark *));
+
 /* ============================================================
    CSS Custom Properties — Light Theme
    ============================================================ */
@@ -10,19 +14,19 @@
   --card-foreground: #18181b;
   --popover: #ffffff;
   --popover-foreground: #18181b;
-  --primary: #15803d;
+  --primary: #1D4ED8;
   --primary-foreground: #ffffff;
   --secondary: #f4f4f5;
   --secondary-foreground: #18181b;
   --muted: #f4f4f5;
   --muted-foreground: #71717a;
-  --accent: #f0fdf4;
-  --accent-foreground: #14532d;
+  --accent: #eff6ff;
+  --accent-foreground: #1e3a8a;
   --destructive: #dc2626;
   --destructive-foreground: #ffffff;
   --border: #e4e4e7;
   --input: #e4e4e7;
-  --ring: #15803d;
+  --ring: #1D4ED8;
   --radius: 0.5rem;
 }
 
@@ -36,37 +40,37 @@
   --card-foreground: #fafafa;
   --popover: #18181b;
   --popover-foreground: #fafafa;
-  --primary: #4ade80;
-  --primary-foreground: #052e16;
+  --primary: #60a5fa;
+  --primary-foreground: #172554;
   --secondary: #27272a;
   --secondary-foreground: #fafafa;
   --muted: #27272a;
   --muted-foreground: #a1a1aa;
-  --accent: #14532d;
-  --accent-foreground: #dcfce7;
+  --accent: #1e3a8a;
+  --accent-foreground: #dbeafe;
   --destructive: #ef4444;
   --destructive-foreground: #fafafa;
   --border: #27272a;
   --input: #27272a;
-  --ring: #4ade80;
+  --ring: #60a5fa;
 }
 
 /* ============================================================
    Tailwind v4 Custom Theme Tokens
    ============================================================ */
 @theme {
-  /* Primary color scale — forest green */
-  --color-primary-50:  oklch(98.2% 0.018 155.826);
-  --color-primary-100: oklch(96.2% 0.044 156.743);
-  --color-primary-200: oklch(92.5% 0.084 155.995);
-  --color-primary-300: oklch(87.1% 0.15  154.449);
-  --color-primary-400: oklch(79.2% 0.209 151.711);
-  --color-primary-500: oklch(72.3% 0.219 149.579);
-  --color-primary-600: oklch(62.7% 0.194 149.214);
-  --color-primary-700: oklch(52.7% 0.154 150.069);
-  --color-primary-800: oklch(44.8% 0.119 151.328);
-  --color-primary-900: oklch(39.3% 0.095 152.535);
-  --color-primary-950: oklch(26.6% 0.065 152.934);
+  /* Primary color scale — royal blue */
+  --color-primary-50:  oklch(97.0% 0.014 254.604);
+  --color-primary-100: oklch(93.2% 0.032 254.585);
+  --color-primary-200: oklch(86.9% 0.065 254.624);
+  --color-primary-300: oklch(78.8% 0.115 252.767);
+  --color-primary-400: oklch(70.7% 0.165 254.624);
+  --color-primary-500: oklch(62.3% 0.214 259.815);
+  --color-primary-600: oklch(54.6% 0.245 262.881);
+  --color-primary-700: oklch(48.8% 0.243 264.376);
+  --color-primary-800: oklch(42.4% 0.199 265.638);
+  --color-primary-900: oklch(37.9% 0.146 265.522);
+  --color-primary-950: oklch(28.2% 0.091 267.935);
 
   /* Font family */
   --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,

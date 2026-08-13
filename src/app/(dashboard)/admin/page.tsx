@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic'
+
 import { redirect } from 'next/navigation'
 import { PageHeader } from '@/components/shared/page-header'
 import { AdminPanel } from '@/components/admin/admin-panel'
@@ -6,8 +8,8 @@ import {
   getTeamMembers,
   getDiscountRules,
   getBusinessSettings,
+  getManagersForAdmin,
 } from '@/lib/actions/admin'
-import { createClient } from '@/lib/supabase/server'
 import type { Role } from '@/lib/types/database'
 
 export default async function AdminPage() {
@@ -24,15 +26,7 @@ export default async function AdminPage() {
       getTeamMembers(),
       getDiscountRules(),
       getBusinessSettings(),
-      (async () => {
-        const db = await createClient()
-        const { data } = await db
-          .from('profiles')
-          .select('id, name, role')
-          .in('role', ['manager', 'admin'])
-          .order('name')
-        return { data: (data ?? []) as Array<{ id: string; name: string | null; role: Role }> }
-      })(),
+      getManagersForAdmin(),
     ])
 
   const teamMembers = teamResult.data

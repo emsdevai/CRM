@@ -59,7 +59,7 @@ interface DiscountEditState {
 const inputCls = cn(
   'w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm',
   'placeholder:text-zinc-400 text-zinc-900',
-  'focus:outline-none focus:ring-2 focus:ring-green-600/20 focus:border-green-600',
+  'focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600',
   'disabled:opacity-50',
 )
 
@@ -75,7 +75,7 @@ function TabTrigger({ value, icon: Icon, label }: { value: string; icon: React.E
         'text-zinc-500 hover:text-zinc-700 hover:bg-zinc-100',
         'data-[state=active]:bg-white data-[state=active]:text-zinc-900',
         'data-[state=active]:shadow-sm data-[state=active]:border data-[state=active]:border-zinc-200',
-        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-500',
+        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500',
       )}
     >
       <Icon className="w-4 h-4" aria-hidden="true" />
@@ -123,7 +123,7 @@ function TeamTab({
         </p>
         <button
           onClick={openCreate}
-          className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-green-600 hover:bg-green-700 rounded-lg transition-colors"
+          className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors"
         >
           <Plus className="w-4 h-4" />
           Add Team Member
@@ -150,8 +150,8 @@ function TeamTab({
                 <tr key={member.id} className="hover:bg-zinc-50/50 transition-colors">
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0">
-                        <span className="text-xs font-semibold text-green-700">
+                      <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
+                        <span className="text-xs font-semibold text-blue-700">
                           {getInitials(member.name)}
                         </span>
                       </div>
@@ -168,7 +168,7 @@ function TeamTab({
                   </td>
                   <td className="px-4 py-3 hidden md:table-cell">
                     <span className="text-sm text-zinc-600">
-                      {(member.manager as { name: string | null } | null)?.name ?? '—'}
+                      {managers.find((m) => m.id === member.manager_id)?.name ?? '—'}
                     </span>
                   </td>
                   <td className="px-4 py-3 hidden lg:table-cell">
@@ -339,7 +339,7 @@ function DiscountTab({ rules }: { rules: DiscountRule[] }) {
                     <button
                       onClick={() => saveEdit(rule)}
                       disabled={saving}
-                      className="flex items-center gap-1.5 text-xs font-medium text-white bg-green-600 hover:bg-green-700 px-3 py-1.5 rounded-lg transition-colors disabled:opacity-50"
+                      className="flex items-center gap-1.5 text-xs font-medium text-white bg-blue-600 hover:bg-blue-700 px-3 py-1.5 rounded-lg transition-colors disabled:opacity-50"
                     >
                       <Check className="w-3.5 h-3.5" />
                       Save
@@ -455,7 +455,7 @@ function SettingsTab({ settings }: { settings: Record<string, unknown> }) {
   } = useForm<SettingsFormValues>({
     resolver: zodResolver(settingsSchema),
     defaultValues: {
-      company_name: String(settings.company_name ?? 'Jangir Brothers'),
+      company_name: String(settings.company_name ?? 'Jangid Brothers'),
       gst_number: String(settings.gst_number ?? ''),
       pan_number: String(settings.pan_number ?? ''),
       address: String(settings.address ?? ''),
@@ -487,7 +487,7 @@ function SettingsTab({ settings }: { settings: Record<string, unknown> }) {
               {...register('company_name')}
               type="text"
               className={inputCls}
-              placeholder="Jangir Brothers"
+              placeholder="Jangid Brothers"
             />
             {errors.company_name && (
               <p className="text-xs text-red-600">{errors.company_name.message}</p>
@@ -550,7 +550,7 @@ function SettingsTab({ settings }: { settings: Record<string, unknown> }) {
         <button
           type="submit"
           disabled={isSubmitting}
-          className="flex items-center gap-2 px-5 py-2.5 text-sm font-medium text-white bg-green-600 hover:bg-green-700 rounded-lg transition-colors disabled:opacity-50"
+          className="flex items-center gap-2 px-5 py-2.5 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors disabled:opacity-50"
         >
           {isSubmitting ? (
             <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
@@ -639,8 +639,8 @@ function DataTab() {
         {exports.map(({ id, label, description, icon: Icon }) => (
           <div key={id} className="bg-white rounded-xl border border-zinc-200 p-5">
             <div className="flex items-center gap-3 mb-3">
-              <div className="w-9 h-9 bg-green-50 rounded-lg flex items-center justify-center">
-                <Icon className="w-4 h-4 text-green-700" />
+              <div className="w-9 h-9 bg-blue-50 rounded-lg flex items-center justify-center">
+                <Icon className="w-4 h-4 text-blue-700" />
               </div>
               <h3 className="text-sm font-semibold text-zinc-900">{label}</h3>
             </div>
@@ -682,12 +682,12 @@ export function AdminPanel({
   return (
     <Tabs.Root defaultValue="team" className="space-y-5">
       {/* Tab list */}
-      <div className="bg-zinc-100 rounded-xl p-1 inline-flex gap-1 flex-wrap">
+      <Tabs.List className="bg-zinc-100 rounded-xl p-1 inline-flex gap-1 flex-wrap">
         <TabTrigger value="team" icon={Users} label="Team Management" />
         <TabTrigger value="discounts" icon={Percent} label="Discount Rules" />
         <TabTrigger value="settings" icon={Building2} label="Business Settings" />
         <TabTrigger value="data" icon={Download} label="Data & Reports" />
-      </div>
+      </Tabs.List>
 
       {/* Team */}
       <Tabs.Content value="team" className="focus:outline-none">

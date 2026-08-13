@@ -1,4 +1,4 @@
-import type React from 'react'
+import React from 'react'
 import { type LucideIcon } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -35,9 +35,9 @@ export function EmptyState({
   action,
   className,
 }: EmptyStateProps) {
-  // Lucide icons are functions; JSX elements are objects
-  const isComponent = typeof icon === 'function'
-  const Icon = isComponent ? (icon as LucideIcon) : null
+  // If it's already a rendered JSX element, pass through; otherwise treat as component
+  const isRenderedElement = React.isValidElement(icon)
+  const Icon = isRenderedElement ? null : (icon as LucideIcon)
 
   return (
     <div
@@ -47,9 +47,9 @@ export function EmptyState({
       )}
     >
       <div className="w-14 h-14 rounded-2xl bg-zinc-100 flex items-center justify-center mb-4">
-        {Icon
-          ? <Icon className="w-7 h-7 text-zinc-400" />
-          : icon as React.ReactNode
+        {isRenderedElement
+          ? icon as React.ReactNode
+          : Icon && <Icon className="w-7 h-7 text-zinc-400" />
         }
       </div>
 
@@ -65,7 +65,7 @@ export function EmptyState({
             <button
               type="button"
               onClick={action.onClick}
-              className="mt-6 inline-flex items-center px-4 py-2 rounded-lg text-sm font-medium text-white bg-green-700 hover:bg-green-800 active:bg-green-900 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-700 focus-visible:ring-offset-2"
+              className="mt-6 inline-flex items-center px-4 py-2 rounded-lg text-sm font-medium text-white bg-blue-700 hover:bg-blue-800 active:bg-blue-900 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-700 focus-visible:ring-offset-2"
             >
               {action.label}
             </button>

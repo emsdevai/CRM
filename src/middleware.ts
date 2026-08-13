@@ -2,6 +2,11 @@ import { type NextRequest, NextResponse } from 'next/server'
 import { updateSession } from '@/lib/supabase/middleware'
 
 export async function middleware(request: NextRequest) {
+  // DEMO MODE: skip Supabase auth entirely so the UI can be previewed
+  if (process.env.NEXT_PUBLIC_DEMO_MODE === 'true') {
+    return NextResponse.next({ request })
+  }
+
   const { supabaseResponse, user } = await updateSession(request)
 
   const { pathname } = request.nextUrl

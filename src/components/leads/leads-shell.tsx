@@ -109,8 +109,8 @@ export function LeadsShell({
               <button
                 className={cn(
                   'inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white',
-                  'bg-green-700 hover:bg-green-800 rounded-lg transition-colors',
-                  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-700 focus-visible:ring-offset-2',
+                  'bg-blue-700 hover:bg-blue-800 rounded-lg transition-colors',
+                  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-700 focus-visible:ring-offset-2',
                 )}
               >
                 <Plus className="w-4 h-4" />
@@ -198,7 +198,7 @@ export function LeadsShell({
             placeholder="Search leads…"
             defaultValue={currentSearch}
             onChange={e => pushParam('q', e.target.value)}
-            className="w-full pl-9 pr-3 py-2 rounded-lg border border-zinc-300 text-sm text-zinc-900 bg-white outline-none focus:ring-2 focus:ring-green-700/25 focus:border-green-700 transition-shadow"
+            className="w-full pl-9 pr-3 py-2 rounded-lg border border-zinc-300 text-sm text-zinc-900 bg-white outline-none focus:ring-2 focus:ring-blue-700/25 focus:border-blue-700 transition-shadow"
           />
         </div>
 
@@ -208,7 +208,7 @@ export function LeadsShell({
           <select
             defaultValue={currentStage}
             onChange={e => pushParam('stage', e.target.value)}
-            className="pl-8 pr-3 py-2 rounded-lg border border-zinc-300 text-sm text-zinc-900 bg-white outline-none focus:ring-2 focus:ring-green-700/25 focus:border-green-700 transition-shadow appearance-none"
+            className="pl-8 pr-3 py-2 rounded-lg border border-zinc-300 text-sm text-zinc-900 bg-white outline-none focus:ring-2 focus:ring-blue-700/25 focus:border-blue-700 transition-shadow appearance-none"
           >
             <option value="">All Stages</option>
             {LEAD_STAGES.map(s => (
@@ -224,7 +224,7 @@ export function LeadsShell({
           <select
             defaultValue={currentAssignee}
             onChange={e => pushParam('assignee', e.target.value)}
-            className="py-2 px-3 rounded-lg border border-zinc-300 text-sm text-zinc-900 bg-white outline-none focus:ring-2 focus:ring-green-700/25 focus:border-green-700 transition-shadow"
+            className="py-2 px-3 rounded-lg border border-zinc-300 text-sm text-zinc-900 bg-white outline-none focus:ring-2 focus:ring-blue-700/25 focus:border-blue-700 transition-shadow"
           >
             <option value="">All Salespeople</option>
             {salespeople.map(sp => (
