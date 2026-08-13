@@ -25,7 +25,10 @@ async function getScopedUserIds(
   supabase: Awaited<ReturnType<typeof createClient>>,
   profile: Profile,
 ): Promise<string[]> {
-  if (profile.role === 'admin') return []
+  // Admin and salesperson see ALL customers (no salesperson_id filter).
+  // Salespersons need to see every customer to create quotations/invoices,
+  // regardless of which staff member originally entered the record.
+  if (profile.role === 'admin' || profile.role === 'salesperson') return []
 
   if (profile.role === 'manager') {
     const { data: teamMembers } = await supabase
@@ -36,7 +39,7 @@ async function getScopedUserIds(
     return [profile.id, ...ids]
   }
 
-  return [profile.id]
+  return []
 }
 
 // ---------------------------------------------------------------------------
