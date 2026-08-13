@@ -19,10 +19,12 @@ import type {
 // ---------------------------------------------------------------------------
 // Service client (bypasses RLS)
 // ---------------------------------------------------------------------------
+// NOTE: .trim() is essential — Vercel env vars can include a trailing \n which
+// causes Headers.append to throw "invalid header value" for the Bearer token.
 function createServiceClient() {
   return createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    (process.env.NEXT_PUBLIC_SUPABASE_URL ?? '').trim(),
+    (process.env.SUPABASE_SERVICE_ROLE_KEY ?? '').trim(),
     { cookies: { getAll: () => [], setAll: () => {} }, auth: { autoRefreshToken: false, persistSession: false } },
   )
 }

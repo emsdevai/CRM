@@ -12,8 +12,6 @@ import {
   getAllEmployeesLeaveBalances,
   getMyLeaveApplications,
   getTodayAttendance,
-  getAttendanceHistory,
-  getAttendanceSummary,
 } from '@/lib/actions/hr'
 
 export default async function HRPage() {
@@ -22,23 +20,23 @@ export default async function HRPage() {
   const profile = profileResult.data
   const isAdmin = profile.role === 'admin' || profile.role === 'manager'
 
+  // Critical path: data needed for first paint.
+  // attendanceHistory + attendanceSummary are intentionally excluded here —
+  // they query a full month of rows and are fetched client-side by
+  // AttendanceCalendar on mount, so the page doesn't block waiting for them.
   const [
     leaveTypesResult,
     myBalancesResult,
     myApplicationsResult,
     todayAttendanceResult,
-    attendanceHistoryResult,
-    attendanceSummaryResult,
   ] = await Promise.all([
     getLeaveTypes(),
     getMyLeaveBalances(),
     getMyLeaveApplications(),
     getTodayAttendance(),
-    getAttendanceHistory(),
-    getAttendanceSummary(),
   ])
 
-  // Admin-only fetches
+  // Admin-only fetches (skipped entirely for non-admin users)
   const [allApplicationsResult, todayAllResult, allBalancesResult] = await Promise.all([
     isAdmin ? getAllLeaveApplications('Pending') : Promise.resolve({ data: [] }),
     isAdmin ? getAllEmployeesTodayAttendance() : Promise.resolve({ data: [] }),
@@ -58,8 +56,8 @@ export default async function HRPage() {
         myBalances={myBalancesResult.data}
         myApplications={myApplicationsResult.data}
         todayAttendance={todayAttendanceResult.data}
-        attendanceHistory={attendanceHistoryResult.data}
-        attendanceSummary={attendanceSummaryResult.data}
+        attendanceHistory={[]}
+        attendanceSummary={null}
         allPendingApplications={allApplicationsResult.data as any}
         todayAllAttendance={todayAllResult.data as any}
         allEmployeeBalances={allBalancesResult.data as any}

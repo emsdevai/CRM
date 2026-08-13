@@ -392,6 +392,14 @@ function AttendanceCalendar({
     setHistory(h.data); setSummary(s.data); setLoading(false)
   }
 
+  // Fetch current month's data on mount — the server no longer pre-fetches
+  // attendance history so the page loads faster; we load it here instead.
+  useEffect(() => {
+    if (initialHistory.length === 0) {
+      loadMonth(now.getFullYear(), now.getMonth())
+    }
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
   function prevMonth() {
     const d = new Date(viewYear, viewMonth - 1)
     setViewMonth(d.getMonth()); setViewYear(d.getFullYear())

@@ -268,22 +268,26 @@ export default function ScanPage() {
   const startScanner = useCallback(async () => {
     setScannerError(null)
     try {
-      const { Html5QrcodeScanner } = await import('html5-qrcode')
-      const scanner = new Html5QrcodeScanner(
-        'qr-reader',
-        { fps: 10, qrbox: { width: 260, height: 260 }, rememberLastUsedCamera: true },
-        false,
-      )
-      scanner.render(
+      // Use Html5Qrcode (not Html5QrcodeScanner) so we get a clean camera view
+      // with no camera-selection dropdown, no "Cam 1 / Cam 2" buttons, and no
+      // file-upload option — just the live feed that starts scanning immediately.
+      const { Html5Qrcode } = await import('html5-qrcode')
+      const qrCode = new Html5Qrcode('qr-reader')
+
+      await qrCode.start(
+        { facingMode: 'environment' }, // back camera; falls back to front if none
+        { fps: 10, qrbox: { width: 260, height: 260 } },
         async (decodedText) => {
-          await scanner.clear().catch(() => {})
+          await qrCode.stop().catch(() => {})
           scannerRef.current = null
           setScannerActive(false)
           handleCodeFound(decodedText)
         },
-        () => {},
+        () => {}, // per-frame failures are normal (no code visible yet)
       )
-      scannerRef.current = scanner
+
+      // Wrap as { clear } so stopScanner works unchanged
+      scannerRef.current = { clear: () => qrCode.stop() }
       setScannerActive(true)
     } catch (err) {
       setScannerError(err instanceof Error ? err.message : 'Failed to start camera')
