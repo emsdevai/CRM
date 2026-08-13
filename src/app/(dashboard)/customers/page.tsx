@@ -42,10 +42,10 @@ export default async function CustomersPage({
   if (!profile) redirect('/login')
 
   // ── Scope IDs ─────────────────────────────────────────────────────────────
+  // Admin + salesperson see ALL customers (empty = no filter).
+  // Salespersons need to see every customer to make quotations/invoices for them.
   let scopeIds: string[] = []
-  if (profile.role === 'salesperson') {
-    scopeIds = [user.id]
-  } else if (profile.role === 'manager') {
+  if (profile.role === 'manager') {
     const { data: team } = await supabase
       .from('profiles')
       .select('id')
