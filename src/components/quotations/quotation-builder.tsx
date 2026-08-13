@@ -18,6 +18,7 @@ import {
   Plus,
   Search,
   Trash2,
+  UserPlus,
   X,
 } from 'lucide-react'
 import { cn, calcLineItem, formatCurrency } from '@/lib/utils'
@@ -28,6 +29,7 @@ import {
   searchProducts,
   type QuotationItemInput,
 } from '@/lib/actions/quotations'
+import { createLead } from '@/lib/actions/leads'
 import { getActiveOffers } from '@/lib/actions/offers'
 import { QuotationStageBadge } from '@/components/shared/status-badge'
 import { StageBadge } from '@/components/shared/status-badge'
@@ -449,7 +451,7 @@ export default function QuotationBuilder({
   discountRule,
 }: Props) {
   // ─── Recipient mode ───────────────────────────────────────────────────────
-  const [mode, setMode] = useState<'lead' | 'customer'>(
+  const [mode, setMode] = useState<'lead' | 'customer' | 'walkin'>(
     initialCustomerId ? 'customer' : 'lead',
   )
 
@@ -464,6 +466,10 @@ export default function QuotationBuilder({
   const [customerQuery, setCustomerQuery] = useState('')
   const [customerResults, setCustomerResults] = useState<Customer[]>([])
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null)
+
+  // ─── Walk-in ──────────────────────────────────────────────────────────────
+  const [walkinName, setWalkinName] = useState('')
+  const [walkinPhone, setWalkinPhone] = useState('')
 
   // ─── Notes ────────────────────────────────────────────────────────────────
   const [notes, setNotes] = useState('')
@@ -619,17 +625,40 @@ export default function QuotationBuilder({
   // ─── Submit handlers ──────────────────────────────────────────────────────
 
   async function handleSubmit(asDraft: boolean) {
-    const recipientId = mode === 'lead' ? selectedLead?.id : selectedCustomer?.id
-    if (!recipientId) {
-      toast.error(`Please select a ${mode}`)
-      return
+    // Validate recipient
+    if (mode === 'lead' && !selectedLead?.id) {
+      toast.error('Please select a lead'); return
+    }
+    if (mode === 'customer' && !selectedCustomer?.id) {
+      toast.error('Please select a customer'); return
+    }
+    if (mode === 'walkin' && !walkinName.trim()) {
+      toast.error('Please enter the walk-in customer name'); return
     }
     if (items.length === 0) {
-      toast.error('Add at least one product or custom item')
-      return
+      toast.error('Add at least one product or custom item'); return
     }
 
     setSaving(asDraft ? 'draft' : 'submit')
+
+    // Walk-in: create a quick lead record first, then use its id
+    let resolvedLeadId: string | null = mode === 'lead' ? (selectedLead?.id ?? null) : null
+    const resolvedCustomerId: string | null = mode === 'customer' ? (selectedCustomer?.id ?? null) : null
+
+    if (mode === 'walkin') {
+      const { data: lead, error: leadErr } = await createLead({
+        name: walkinName.trim(),
+        phone: walkinPhone.trim() || '',
+        stage: 'New',
+        source: 'Walk-in',
+      })
+      if (leadErr || !lead) {
+        toast.error(leadErr ?? 'Failed to register walk-in lead')
+        setSaving(null)
+        return
+      }
+      resolvedLeadId = lead.id
+    }
 
     const itemInputs: QuotationItemInput[] = items.map((item) => ({
       product_id: item.product_id ?? undefined,
@@ -644,8 +673,8 @@ export default function QuotationBuilder({
     }))
 
     const result = await createQuotation({
-      lead_id: mode === 'lead' ? selectedLead?.id ?? null : null,
-      customer_id: mode === 'customer' ? selectedCustomer?.id ?? null : null,
+      lead_id: resolvedLeadId,
+      customer_id: resolvedCustomerId,
       items: itemInputs,
       notes: notes || undefined,
       asDraft,
@@ -658,9 +687,7 @@ export default function QuotationBuilder({
       return
     }
 
-    toast.success(
-      asDraft ? 'Quotation saved as draft' : 'Quotation created successfully',
-    )
+    toast.success(asDraft ? 'Quotation saved as draft' : 'Quotation created successfully')
     onSuccess(result.data!.id)
   }
 
@@ -698,6 +725,19 @@ export default function QuotationBuilder({
               )}
             >
               Customer
+            </button>
+            <button
+              type="button"
+              onClick={() => { setMode('walkin'); setSelectedLead(null); setSelectedCustomer(null) }}
+              className={cn(
+                'flex items-center gap-1 px-3 py-1.5 font-medium transition-colors',
+                mode === 'walkin'
+                  ? 'bg-blue-600 text-white'
+                  : 'text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-800',
+              )}
+            >
+              <UserPlus className="w-3 h-3" />
+              Walk-in
             </button>
           </div>
         </div>
@@ -759,6 +799,52 @@ export default function QuotationBuilder({
                 </div>
               )}
             />
+          </div>
+        )}
+
+        {/* Walk-in: quick name + phone, lead created automatically on save */}
+        {mode === 'walkin' && (
+          <div className="space-y-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs font-medium text-zinc-500 mb-1.5">
+                  Customer Name *
+                </label>
+                <input
+                  type="text"
+                  value={walkinName}
+                  onChange={(e) => setWalkinName(e.target.value)}
+                  placeholder="e.g. Ramesh Sharma"
+                  className={cn(
+                    'w-full px-3 py-2 text-sm rounded-lg border',
+                    'border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900',
+                    'placeholder:text-zinc-400 text-zinc-900 dark:text-zinc-100',
+                    'focus:outline-none focus:ring-2 focus:ring-blue-500/20',
+                  )}
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-zinc-500 mb-1.5">
+                  Phone (optional)
+                </label>
+                <input
+                  type="tel"
+                  value={walkinPhone}
+                  onChange={(e) => setWalkinPhone(e.target.value)}
+                  placeholder="+91 98765 43210"
+                  className={cn(
+                    'w-full px-3 py-2 text-sm rounded-lg border',
+                    'border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900',
+                    'placeholder:text-zinc-400 text-zinc-900 dark:text-zinc-100',
+                    'focus:outline-none focus:ring-2 focus:ring-blue-500/20',
+                  )}
+                />
+              </div>
+            </div>
+            <p className="text-xs text-zinc-400 flex items-center gap-1">
+              <UserPlus className="w-3 h-3" />
+              A lead record will be created automatically and linked to this quotation.
+            </p>
           </div>
         )}
 

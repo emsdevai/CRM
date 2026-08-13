@@ -81,9 +81,9 @@ export async function searchCustomers(query: string): Promise<Customer[]> {
       .order('name', { ascending: true })
       .limit(20)
 
-    if (role === 'salesperson') {
-      q = q.eq('salesperson_id', user.id)
-    } else if (role === 'manager') {
+    // Salespersons can see ALL customers so they can create quotations for
+    // any existing client (not just ones previously assigned to them).
+    if (role === 'manager') {
       const { data: team } = await supabase
         .from('profiles')
         .select('id')
