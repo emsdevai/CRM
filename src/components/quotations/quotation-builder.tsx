@@ -30,6 +30,9 @@ import {
   type QuotationItemInput,
 } from '@/lib/actions/quotations'
 import { createLead } from '@/lib/actions/leads'
+import { LeadForm } from '@/components/leads/lead-form'
+import type { LeadFormValues } from '@/lib/validations'
+import * as Dialog from '@radix-ui/react-dialog'
 import { getActiveOffers } from '@/lib/actions/offers'
 import { QuotationStageBadge } from '@/components/shared/status-badge'
 import { StageBadge } from '@/components/shared/status-badge'
@@ -468,8 +471,9 @@ export default function QuotationBuilder({
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null)
 
   // ─── Walk-in ──────────────────────────────────────────────────────────────
-  const [walkinName, setWalkinName] = useState('')
-  const [walkinPhone, setWalkinPhone] = useState('')
+  // Walk-in reuses selectedLead for storage; this dialog creates a new lead.
+  const [walkinSheetOpen, setWalkinSheetOpen] = useState(false)
+  const [walkinLoading, setWalkinLoading] = useState(false)
 
   // ─── Notes ────────────────────────────────────────────────────────────────
   const [notes, setNotes] = useState('')
@@ -624,6 +628,24 @@ export default function QuotationBuilder({
 
   // ─── Submit handlers ──────────────────────────────────────────────────────
 
+  async function handleWalkinSubmit(values: LeadFormValues) {
+    setWalkinLoading(true)
+    const { data: lead, error } = await createLead({
+      ...values,
+      stage: 'New',
+      source: values.source ?? 'Walk-in',
+    })
+    if (error || !lead) {
+      toast.error(error ?? 'Failed to create walk-in lead')
+      setWalkinLoading(false)
+      return
+    }
+    setSelectedLead(lead)
+    setWalkinSheetOpen(false)
+    setWalkinLoading(false)
+    toast.success(`Walk-in lead created: ${lead.name}`)
+  }
+
   async function handleSubmit(asDraft: boolean) {
     // Validate recipient
     if (mode === 'lead' && !selectedLead?.id) {
@@ -632,8 +654,8 @@ export default function QuotationBuilder({
     if (mode === 'customer' && !selectedCustomer?.id) {
       toast.error('Please select a customer'); return
     }
-    if (mode === 'walkin' && !walkinName.trim()) {
-      toast.error('Please enter the walk-in customer name'); return
+    if (mode === 'walkin' && !selectedLead?.id) {
+      toast.error('Please register or select a walk-in lead'); return
     }
     if (items.length === 0) {
       toast.error('Add at least one product or custom item'); return
@@ -641,24 +663,10 @@ export default function QuotationBuilder({
 
     setSaving(asDraft ? 'draft' : 'submit')
 
-    // Walk-in: create a quick lead record first, then use its id
-    let resolvedLeadId: string | null = mode === 'lead' ? (selectedLead?.id ?? null) : null
+    // For both 'lead' and 'walkin' modes selectedLead holds the lead
+    const resolvedLeadId: string | null =
+      (mode === 'lead' || mode === 'walkin') ? (selectedLead?.id ?? null) : null
     const resolvedCustomerId: string | null = mode === 'customer' ? (selectedCustomer?.id ?? null) : null
-
-    if (mode === 'walkin') {
-      const { data: lead, error: leadErr } = await createLead({
-        name: walkinName.trim(),
-        phone: walkinPhone.trim() || '',
-        stage: 'New',
-        source: 'Walk-in',
-      })
-      if (leadErr || !lead) {
-        toast.error(leadErr ?? 'Failed to register walk-in lead')
-        setSaving(null)
-        return
-      }
-      resolvedLeadId = lead.id
-    }
 
     const itemInputs: QuotationItemInput[] = items.map((item) => ({
       product_id: item.product_id ?? undefined,
@@ -802,49 +810,89 @@ export default function QuotationBuilder({
           </div>
         )}
 
-        {/* Walk-in: quick name + phone, lead created automatically on save */}
+        {/* Walk-in — mirrors the Scan & Quote walk-in flow */}
         {mode === 'walkin' && (
-          <div className="space-y-3">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div>
-                <label className="block text-xs font-medium text-zinc-500 mb-1.5">
-                  Customer Name *
-                </label>
-                <input
-                  type="text"
-                  value={walkinName}
-                  onChange={(e) => setWalkinName(e.target.value)}
-                  placeholder="e.g. Ramesh Sharma"
+          <div>
+            {selectedLead ? (
+              /* Selected walk-in lead chip */
+              <div className="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800">
+                <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center flex-shrink-0">
+                  <span className="text-white text-xs font-bold">
+                    {selectedLead.name.charAt(0).toUpperCase()}
+                  </span>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold text-blue-900 dark:text-blue-100 truncate">
+                    {selectedLead.name}
+                  </p>
+                  <p className="text-xs text-blue-700 dark:text-blue-300">
+                    Walk-in lead
+                    {selectedLead.phone ? ` · ${selectedLead.phone}` : ''}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setSelectedLead(null)}
+                  className="p-1 text-blue-400 hover:text-blue-700 flex-shrink-0"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            ) : (
+              /* No lead selected yet */
+              <div className="space-y-2">
+                {/* Register new walk-in */}
+                <button
+                  type="button"
+                  onClick={() => setWalkinSheetOpen(true)}
                   className={cn(
-                    'w-full px-3 py-2 text-sm rounded-lg border',
-                    'border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900',
-                    'placeholder:text-zinc-400 text-zinc-900 dark:text-zinc-100',
-                    'focus:outline-none focus:ring-2 focus:ring-blue-500/20',
+                    'w-full flex items-center gap-3 px-4 py-3.5 rounded-xl',
+                    'border-2 border-dashed border-zinc-300 dark:border-zinc-700',
+                    'hover:border-blue-500 hover:bg-blue-50 dark:hover:bg-blue-950/20',
+                    'transition-colors text-left',
+                  )}
+                >
+                  <UserPlus className="w-5 h-5 text-zinc-400 flex-shrink-0" />
+                  <div>
+                    <p className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                      Register New Walk-in Lead
+                    </p>
+                    <p className="text-xs text-zinc-400">
+                      Enter name, phone, categories, demographics…
+                    </p>
+                  </div>
+                </button>
+
+                {/* Divider */}
+                <div className="flex items-center gap-2">
+                  <div className="h-px flex-1 bg-zinc-200 dark:bg-zinc-700" />
+                  <span className="text-xs text-zinc-400">or search existing lead</span>
+                  <div className="h-px flex-1 bg-zinc-200 dark:bg-zinc-700" />
+                </div>
+
+                {/* Reuse lead combobox */}
+                <Combobox<Lead>
+                  placeholder="Search leads by name or phone…"
+                  selected={selectedLead}
+                  results={leadResults}
+                  query={leadQuery}
+                  open={leadOpen}
+                  onQueryChange={setLeadQuery}
+                  onOpen={() => setLeadOpen(true)}
+                  onClose={() => setLeadOpen(false)}
+                  onSelect={setSelectedLead}
+                  renderItem={(lead) => (
+                    <div className="flex items-center justify-between gap-2">
+                      <div>
+                        <span className="font-medium text-zinc-900 dark:text-zinc-100">{lead.name}</span>
+                        {lead.phone && <span className="ml-2 text-zinc-400">{lead.phone}</span>}
+                      </div>
+                      <StageBadge stage={lead.stage as LeadStage} />
+                    </div>
                   )}
                 />
               </div>
-              <div>
-                <label className="block text-xs font-medium text-zinc-500 mb-1.5">
-                  Phone (optional)
-                </label>
-                <input
-                  type="tel"
-                  value={walkinPhone}
-                  onChange={(e) => setWalkinPhone(e.target.value)}
-                  placeholder="+91 98765 43210"
-                  className={cn(
-                    'w-full px-3 py-2 text-sm rounded-lg border',
-                    'border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900',
-                    'placeholder:text-zinc-400 text-zinc-900 dark:text-zinc-100',
-                    'focus:outline-none focus:ring-2 focus:ring-blue-500/20',
-                  )}
-                />
-              </div>
-            </div>
-            <p className="text-xs text-zinc-400 flex items-center gap-1">
-              <UserPlus className="w-3 h-3" />
-              A lead record will be created automatically and linked to this quotation.
-            </p>
+            )}
           </div>
         )}
 
@@ -1066,6 +1114,53 @@ export default function QuotationBuilder({
           </button>
         </div>
       </div>
+
+      {/* ── Walk-in: Register New Lead dialog ───────────────────────── */}
+      <Dialog.Root open={walkinSheetOpen} onOpenChange={setWalkinSheetOpen}>
+        <Dialog.Portal>
+          <Dialog.Overlay className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm" />
+          <Dialog.Content
+            className={cn(
+              'fixed inset-x-0 bottom-0 z-50 rounded-t-2xl bg-white dark:bg-zinc-900',
+              'shadow-xl max-h-[92dvh] overflow-y-auto',
+              'sm:inset-auto sm:left-1/2 sm:top-1/2 sm:-translate-x-1/2 sm:-translate-y-1/2',
+              'sm:w-full sm:max-w-2xl sm:rounded-2xl sm:max-h-[90vh]',
+            )}
+          >
+            {/* Drag handle (mobile) */}
+            <div className="flex justify-center pt-3 pb-1 sm:hidden">
+              <div className="w-10 h-1 rounded-full bg-zinc-300 dark:bg-zinc-700" />
+            </div>
+
+            <div className="flex items-center justify-between px-5 py-4 border-b border-zinc-200 dark:border-zinc-700">
+              <div>
+                <Dialog.Title className="text-base font-semibold text-zinc-900 dark:text-zinc-100">
+                  Register Walk-in Lead
+                </Dialog.Title>
+                <Dialog.Description className="text-sm text-zinc-500 mt-0.5">
+                  Fill in the customer details below
+                </Dialog.Description>
+              </div>
+              <Dialog.Close asChild>
+                <button
+                  className="p-1.5 rounded-lg text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+                  aria-label="Close"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </Dialog.Close>
+            </div>
+
+            <div className="px-5 py-5">
+              <LeadForm
+                onSubmit={handleWalkinSubmit}
+                onCancel={() => setWalkinSheetOpen(false)}
+                loading={walkinLoading}
+              />
+            </div>
+          </Dialog.Content>
+        </Dialog.Portal>
+      </Dialog.Root>
     </div>
   )
 }
