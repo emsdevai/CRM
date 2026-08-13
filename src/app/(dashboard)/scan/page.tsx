@@ -693,20 +693,27 @@ export default function ScanPage() {
           {flowStep === 'scan' && (
             <>
               <div className="bg-white rounded-xl border border-zinc-200 overflow-hidden">
-                <div className="bg-zinc-950 relative min-h-[240px] flex items-center justify-center">
+                <div className="bg-zinc-950 relative min-h-[280px] flex items-center justify-center overflow-hidden">
+                  {/*
+                    #qr-reader must always be in the DOM with real dimensions.
+                    Html5Qrcode injects a <video> into it; display:none gives it
+                    zero size and the camera stream silently fails to start.
+                    We layer placeholder/error content on top with z-index instead.
+                  */}
+                  <div id="qr-reader" className="absolute inset-0 w-full h-full" />
+
                   {!scannerActive && !scannerError && (
-                    <div className="flex flex-col items-center gap-3 text-zinc-500">
+                    <div className="relative z-10 flex flex-col items-center gap-3 text-zinc-500 pointer-events-none">
                       <CameraOff className="w-12 h-12 text-zinc-700" />
-                      <p className="text-sm text-zinc-500">Tap Start Scanner to use camera</p>
+                      <p className="text-sm text-zinc-500">Tap Open Camera to start scanning</p>
                     </div>
                   )}
                   {scannerError && (
-                    <div className="flex flex-col items-center gap-2 text-red-400 px-4 text-center">
+                    <div className="relative z-10 flex flex-col items-center gap-2 text-red-400 px-4 text-center">
                       <AlertCircle className="w-10 h-10" />
                       <p className="text-sm">{scannerError}</p>
                     </div>
                   )}
-                  <div id="qr-reader" className={cn('w-full', scannerActive ? 'block' : 'hidden')} />
                 </div>
                 <div className="p-4 flex gap-3">
                   {!scannerActive ? (
