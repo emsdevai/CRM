@@ -83,7 +83,7 @@ export function BarcodeDisplay({
 
   // ── Print handler ──────────────────────────────────────────────────────────
   async function handlePrint() {
-    const printWindow = window.open('', '_blank', 'width=480,height=520')
+    const printWindow = window.open('', '_blank', 'width=480,height=640')
     if (!printWindow) return
 
     let codeBlock = ''
@@ -112,7 +112,7 @@ export function BarcodeDisplay({
             reader.readAsDataURL(blob)
           })
           imgBlock = `<img src="${dataUri}" alt="${productName}"
-            style="width:120px;height:120px;object-fit:cover;border-radius:10px;border:1px solid #e4e4e7;margin-bottom:4px" />`
+            style="width:200px;height:200px;object-fit:cover;border-radius:12px;border:1px solid #e4e4e7;margin-bottom:4px" />`
         }
       } catch { /* no image — just skip */ }
     }
