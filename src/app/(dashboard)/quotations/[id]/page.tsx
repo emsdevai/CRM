@@ -207,11 +207,12 @@ export default async function QuotationDetailPage({ params }: PageProps) {
           </h2>
         </div>
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[700px]">
+          <table className="w-full min-w-[800px]">
             <thead>
               <tr className="border-b border-zinc-100 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-800/30">
-                <th className="px-4 py-2.5 text-left text-xs font-medium text-zinc-500 w-72">Product</th>
-                <th className="px-4 py-2.5 text-left text-xs font-medium text-zinc-500">SKU</th>
+                <th className="px-4 py-2.5 text-left text-xs font-medium text-zinc-500 w-60">Product</th>
+                <th className="px-4 py-2.5 text-left text-xs font-medium text-zinc-500 w-24">SKU</th>
+                <th className="px-4 py-2.5 text-left text-xs font-medium text-zinc-500 w-20">HSN</th>
                 <th className="px-4 py-2.5 text-right text-xs font-medium text-zinc-500">Qty</th>
                 <th className="px-4 py-2.5 text-right text-xs font-medium text-zinc-500">Unit Price</th>
                 <th className="px-4 py-2.5 text-right text-xs font-medium text-zinc-500">Disc%</th>
@@ -249,6 +250,9 @@ export default async function QuotationDetailPage({ params }: PageProps) {
                   </td>
                   <td className="px-4 py-3 text-sm text-zinc-500 font-mono">
                     {item.sku ?? '—'}
+                  </td>
+                  <td className="px-4 py-3 text-sm text-zinc-500 font-mono">
+                    {(item as any).product?.hsn_code ?? '—'}
                   </td>
                   <td className="px-4 py-3 text-right text-sm text-zinc-700 dark:text-zinc-300">
                     {item.qty}
@@ -298,6 +302,14 @@ export default async function QuotationDetailPage({ params }: PageProps) {
                 {formatCurrency(quotation.gst_total)}
               </span>
             </div>
+            {((quotation as any).freight_charges ?? 0) > 0 && (
+              <div className="flex justify-between py-2">
+                <span className="text-zinc-500">Freight</span>
+                <span className="font-medium text-zinc-900 dark:text-zinc-100">
+                  {formatCurrency((quotation as any).freight_charges)}
+                </span>
+              </div>
+            )}
             <div className="flex justify-between py-3 bg-zinc-50 dark:bg-zinc-800/50 rounded-lg px-3 -mx-1 mt-1">
               <span className="font-bold text-zinc-900 dark:text-zinc-100">Grand Total</span>
               <span className="font-bold text-xl text-zinc-900 dark:text-zinc-100">

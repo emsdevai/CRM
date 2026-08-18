@@ -204,6 +204,7 @@ export interface Quotation {
   subtotal: number
   discount_total: number
   gst_total: number
+  freight_charges: number
   grand_total: number
   notes: string | null
   created_by: string | null

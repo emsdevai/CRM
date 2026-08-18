@@ -16,8 +16,10 @@ import {
   Loader2,
   Package,
   Plus,
+  QrCode,
   Search,
   Trash2,
+  Truck,
   UserPlus,
   X,
 } from 'lucide-react'
@@ -29,6 +31,7 @@ import {
   searchProducts,
   type QuotationItemInput,
 } from '@/lib/actions/quotations'
+import { getProductByBarcode } from '@/lib/actions/inventory'
 import { createLead } from '@/lib/actions/leads'
 import { LeadForm } from '@/components/leads/lead-form'
 import type { LeadFormValues } from '@/lib/validations'
@@ -48,6 +51,7 @@ interface QuoteItem {
   is_custom: boolean
   name: string
   sku: string
+  hsn_code: string
   image_url: string
   unit_price: number
   qty: number
@@ -90,6 +94,7 @@ function buildQuoteItem(overrides: Partial<QuoteItem> = {}): QuoteItem {
     is_custom: false,
     name: '',
     sku: '',
+    hsn_code: '',
     image_url: '',
     unit_price: 0,
     qty: 1,
@@ -491,6 +496,15 @@ export default function QuotationBuilder({
   // ─── Saving ───────────────────────────────────────────────────────────────
   const [saving, setSaving] = useState<'draft' | 'submit' | null>(null)
 
+  // ─── Freight charges ─────────────────────────────────────────────────────
+  const [freightCharges, setFreightCharges] = useState(0)
+
+  // ─── Scanner ──────────────────────────────────────────────────────────────
+  const [scannerOpen, setScannerOpen] = useState(false)
+  const [scannerActive, setScannerActive] = useState(false)
+  const [scannerError, setScannerError] = useState<string | null>(null)
+  const scannerRef = useRef<{ clear: () => Promise<void> } | null>(null)
+
   // ─── Active offers (fetched once on mount) ────────────────────────────────
   const [activeOffers, setActiveOffers] = useState<Offer[]>([])
   useEffect(() => {
@@ -539,15 +553,60 @@ export default function QuotationBuilder({
     }
   }, [initialLeadId, initialCustomerId])
 
+  // ─── Scanner callbacks ────────────────────────────────────────────────────
+  const startScanner = useCallback(async () => {
+    setScannerError(null)
+    try {
+      const { Html5Qrcode } = await import('html5-qrcode')
+      const qrCode = new Html5Qrcode('qb-qr-reader')
+      await qrCode.start(
+        { facingMode: 'environment' },
+        { fps: 10, qrbox: { width: 240, height: 240 } },
+        async (decodedText) => {
+          await qrCode.stop().catch(() => {})
+          scannerRef.current = null
+          setScannerActive(false)
+          setScannerOpen(false)
+          const { data, error } = await getProductByBarcode(decodedText.trim())
+          if (error || !data) {
+            toast.error(error ?? 'Product not found for this barcode')
+          } else {
+            addProductItem(data)
+            toast.success(`Added: ${data.name}`)
+          }
+        },
+        () => {},
+      )
+      scannerRef.current = { clear: () => qrCode.stop() }
+      setScannerActive(true)
+    } catch (err) {
+      setScannerError(err instanceof Error ? err.message : 'Failed to start camera')
+      setScannerActive(false)
+    }
+  }, [addProductItem])
+
+  const stopScanner = useCallback(async () => {
+    if (scannerRef.current) {
+      await scannerRef.current.clear().catch(() => {})
+      scannerRef.current = null
+    }
+    setScannerActive(false)
+  }, [])
+
+  useEffect(() => {
+    return () => { if (scannerRef.current) scannerRef.current.clear().catch(() => {}) }
+  }, [])
+
   // ─── Totals ───────────────────────────────────────────────────────────────
   const totals = useMemo(() => {
+    const itemsTotal = items.reduce((s, i) => s + i.line_total, 0)
     return {
       subtotal: items.reduce((s, i) => s + i.line_base, 0),
       discountTotal: items.reduce((s, i) => s + i.line_discount, 0),
       gstTotal: items.reduce((s, i) => s + i.gst_amt, 0),
-      grandTotal: items.reduce((s, i) => s + i.line_total, 0),
+      grandTotal: itemsTotal + freightCharges,
     }
-  }, [items])
+  }, [items, freightCharges])
 
   // ─── Approval detection ───────────────────────────────────────────────────
   const maxItemDiscount = items.length > 0
@@ -585,6 +644,7 @@ export default function QuotationBuilder({
         is_custom: false,
         name: product.name,
         sku: product.sku,
+        hsn_code: product.hsn_code ?? '',
         image_url: product.image_url ?? '',
         unit_price: product.price,
         gst_pct: product.gst_pct,
@@ -685,6 +745,7 @@ export default function QuotationBuilder({
       customer_id: resolvedCustomerId,
       items: itemInputs,
       notes: notes || undefined,
+      freight_charges: freightCharges || undefined,
       asDraft,
     })
 
@@ -913,6 +974,32 @@ export default function QuotationBuilder({
             )}
           />
         </div>
+
+        <div>
+          <label className="block text-xs font-medium text-zinc-500 mb-1.5">
+            <span className="flex items-center gap-1.5">
+              <Truck className="w-3.5 h-3.5" />
+              Freight / Delivery Charges (optional)
+            </span>
+          </label>
+          <div className="relative w-40">
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-zinc-400">₹</span>
+            <input
+              type="number"
+              min="0"
+              step="0.01"
+              value={freightCharges || ''}
+              onChange={(e) => setFreightCharges(parseFloat(e.target.value) || 0)}
+              placeholder="0"
+              className={cn(
+                'w-full pl-7 pr-3 py-2 text-sm rounded-lg border',
+                'border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900',
+                'placeholder:text-zinc-400 text-zinc-900 dark:text-zinc-100',
+                'focus:outline-none focus:ring-2 focus:ring-blue-500/20',
+              )}
+            />
+          </div>
+        </div>
       </div>
 
       {/* ── Line items ──────────────────────────────────────────────── */}
@@ -934,10 +1021,11 @@ export default function QuotationBuilder({
         {/* Table */}
         {items.length > 0 && (
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[780px]">
+            <table className="w-full min-w-[880px]">
               <thead>
                 <tr className="border-b border-zinc-100 dark:border-zinc-800">
                   <th className="px-4 py-2.5 text-left text-xs font-medium text-zinc-500 w-64">Product</th>
+                  <th className="px-3 py-2.5 text-left text-xs font-medium text-zinc-500 w-24">HSN</th>
                   <th className="px-3 py-2.5 text-right text-xs font-medium text-zinc-500 w-20">Qty</th>
                   <th className="px-3 py-2.5 text-right text-xs font-medium text-zinc-500 w-28">Unit Price</th>
                   <th className="px-3 py-2.5 text-right text-xs font-medium text-zinc-500 w-24">Disc%</th>
@@ -973,7 +1061,7 @@ export default function QuotationBuilder({
 
         {/* Add buttons + custom form */}
         <div className="px-5 py-4 border-t border-zinc-100 dark:border-zinc-800 space-y-3">
-          <div className="relative flex items-center gap-2" ref={productAnchorRef}>
+          <div className="relative flex items-center gap-2 flex-wrap" ref={productAnchorRef}>
             <button
               type="button"
               onClick={() => setProductSearchOpen((v) => !v)}
@@ -985,6 +1073,18 @@ export default function QuotationBuilder({
             >
               <Plus className="w-3.5 h-3.5" />
               Add Product
+            </button>
+            <button
+              type="button"
+              onClick={() => { setScannerOpen(true); setScannerError(null) }}
+              className={cn(
+                'flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-lg border transition-colors',
+                'border-zinc-200 dark:border-zinc-700 text-zinc-700 dark:text-zinc-300',
+                'hover:bg-zinc-50 dark:hover:bg-zinc-800',
+              )}
+            >
+              <QrCode className="w-3.5 h-3.5" />
+              Scan Barcode
             </button>
             <button
               type="button"
@@ -1057,6 +1157,17 @@ export default function QuotationBuilder({
                 {formatCurrency(totals.gstTotal)}
               </span>
             </div>
+            {freightCharges > 0 && (
+              <div className="flex justify-between px-4 py-2.5">
+                <span className="text-zinc-500 flex items-center gap-1.5">
+                  <Truck className="w-3.5 h-3.5" />
+                  Freight
+                </span>
+                <span className="font-medium text-zinc-900 dark:text-zinc-100">
+                  {formatCurrency(freightCharges)}
+                </span>
+              </div>
+            )}
             <div className="flex justify-between px-4 py-3 bg-zinc-50 dark:bg-zinc-800/60 rounded-b-xl">
               <span className="font-semibold text-zinc-900 dark:text-zinc-100">Grand Total</span>
               <span className="font-bold text-lg text-zinc-900 dark:text-zinc-100">
@@ -1114,6 +1225,87 @@ export default function QuotationBuilder({
           </button>
         </div>
       </div>
+
+      {/* ── Barcode scanner dialog ───────────────────────────────────── */}
+      <Dialog.Root
+        open={scannerOpen}
+        onOpenChange={(open) => {
+          if (!open) stopScanner()
+          setScannerOpen(open)
+        }}
+      >
+        <Dialog.Portal>
+          <Dialog.Overlay className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm" />
+          <Dialog.Content
+            className={cn(
+              'fixed inset-x-0 bottom-0 z-50 rounded-t-2xl bg-white dark:bg-zinc-900',
+              'shadow-xl',
+              'sm:inset-auto sm:left-1/2 sm:top-1/2 sm:-translate-x-1/2 sm:-translate-y-1/2',
+              'sm:w-full sm:max-w-sm sm:rounded-2xl',
+            )}
+          >
+            <div className="flex justify-center pt-3 pb-1 sm:hidden">
+              <div className="w-10 h-1 rounded-full bg-zinc-300 dark:bg-zinc-700" />
+            </div>
+            <div className="flex items-center justify-between px-5 py-4 border-b border-zinc-200 dark:border-zinc-700">
+              <Dialog.Title className="text-base font-semibold text-zinc-900 dark:text-zinc-100">
+                Scan Product Barcode
+              </Dialog.Title>
+              <Dialog.Close asChild>
+                <button
+                  onClick={stopScanner}
+                  className="p-1.5 rounded-lg text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+                  aria-label="Close"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </Dialog.Close>
+            </div>
+            <Dialog.Description className="sr-only">
+              Point the camera at a product barcode or QR code to add it to the quotation
+            </Dialog.Description>
+
+            <div className="px-5 py-5 space-y-4">
+              {/* Camera viewfinder — Html5Qrcode injects a <video> here */}
+              <div
+                id="qb-qr-reader"
+                className="w-full rounded-xl overflow-hidden bg-zinc-900"
+                style={{ minHeight: scannerActive ? 280 : 0 }}
+              />
+
+              {scannerError && (
+                <div className="flex items-center gap-2 rounded-lg bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-900/50 px-3 py-2.5">
+                  <AlertTriangle className="w-4 h-4 text-red-500 flex-none" />
+                  <p className="text-sm text-red-700 dark:text-red-400">{scannerError}</p>
+                </div>
+              )}
+
+              {!scannerActive ? (
+                <button
+                  type="button"
+                  onClick={startScanner}
+                  className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium transition-colors"
+                >
+                  <QrCode className="w-4 h-4" />
+                  Start Camera
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={stopScanner}
+                  className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-zinc-200 hover:bg-zinc-300 dark:bg-zinc-700 dark:hover:bg-zinc-600 text-zinc-700 dark:text-zinc-200 text-sm font-medium transition-colors"
+                >
+                  <X className="w-4 h-4" />
+                  Stop Camera
+                </button>
+              )}
+              <p className="text-xs text-center text-zinc-400">
+                Point the camera at a product barcode or QR code
+              </p>
+            </div>
+          </Dialog.Content>
+        </Dialog.Portal>
+      </Dialog.Root>
 
       {/* ── Walk-in: Register New Lead dialog ───────────────────────── */}
       <Dialog.Root open={walkinSheetOpen} onOpenChange={setWalkinSheetOpen}>
@@ -1216,6 +1408,13 @@ function LineItemRow({
             )}
           </div>
         </div>
+      </td>
+
+      {/* HSN */}
+      <td className="px-3 py-3">
+        <span className="text-xs text-zinc-500 font-mono">
+          {item.hsn_code || '—'}
+        </span>
       </td>
 
       {/* Qty */}

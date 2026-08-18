@@ -61,6 +61,7 @@ export async function GET(
   const subtotal: number = (quotation.subtotal as number) ?? 0
   const discountTotal: number = (quotation.discount_total as number) ?? 0
   const gstTotal: number = (quotation.gst_total as number) ?? 0
+  const freightCharges: number = (quotation as any).freight_charges ?? 0
   const grandTotal: number = (quotation.grand_total as number) ?? 0
   const cgst = gstTotal / 2
   const sgst = gstTotal / 2
@@ -219,6 +220,7 @@ export async function GET(
       ${discountTotal > 0 ? `<tr><td style="color:#dc2626">Total Discount</td><td style="color:#dc2626">−${fmt(discountTotal)}</td></tr>` : ''}
       <tr><td style="color:#555">CGST</td><td>${fmt(cgst)}</td></tr>
       <tr><td style="color:#555">SGST</td><td>${fmt(sgst)}</td></tr>
+      ${freightCharges > 0 ? `<tr><td style="color:#555">Freight / Delivery</td><td>${fmt(freightCharges)}</td></tr>` : ''}
       <tr class="grand-total-row"><td>Grand Total</td><td>${fmt(grandTotal)}</td></tr>
     </tbody>
   </table>

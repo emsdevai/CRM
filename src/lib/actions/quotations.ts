@@ -260,7 +260,7 @@ export async function getQuotationById(id: string): Promise<{
       .select(
         `
         *,
-        items:quotation_items(*),
+        items:quotation_items(*, product:products(id, hsn_code)),
         creator:profiles!quotations_created_by_fkey(id, name, role, phone),
         approver:profiles!quotations_approval_required_from_fkey(id, name, role),
         lead:leads(id, name, phone, email, stage),
@@ -364,6 +364,7 @@ export async function createQuotation(input: {
   customer_id?: string | null
   items: QuotationItemInput[]
   notes?: string
+  freight_charges?: number
   /** true = always save as Draft regardless of discount */
   asDraft?: boolean
 }): Promise<{ data: Quotation | null; error: string | null }> {
@@ -393,7 +394,8 @@ export async function createQuotation(input: {
     const subtotal = calculatedItems.reduce((s, i) => s + i.line_base, 0)
     const discount_total = calculatedItems.reduce((s, i) => s + i.line_discount, 0)
     const gst_total = calculatedItems.reduce((s, i) => s + i.gst_amt, 0)
-    const grand_total = calculatedItems.reduce((s, i) => s + i.line_total, 0)
+    const freight_charges = input.freight_charges ?? 0
+    const grand_total = calculatedItems.reduce((s, i) => s + i.line_total, 0) + freight_charges
 
     // Determine if approval is needed
     const maxDiscount = Math.max(...input.items.map((i) => i.discount_pct), 0)
@@ -436,6 +438,7 @@ export async function createQuotation(input: {
         subtotal,
         discount_total,
         gst_total,
+        freight_charges,
         grand_total,
         notes: input.notes ?? null,
         created_by: user.id,
