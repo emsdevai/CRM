@@ -916,6 +916,8 @@ export async function updateQuotationFull(
     notes?: string | null
     stage?: QuotationStage
     freight_charges?: number
+    billed_to?: Record<string, string> | null
+    shipped_to?: Record<string, string> | null
     items: QuotationItemInput[]
   },
 ): Promise<{ error: string | null }> {
@@ -965,11 +967,13 @@ export async function updateQuotationFull(
     const headerUpdate: Record<string, unknown> = {
       subtotal, discount_total, gst_total, freight_charges, grand_total,
     }
-    if (input.title      !== undefined) headerUpdate.title       = input.title || null
-    if (input.notes      !== undefined) headerUpdate.notes       = input.notes || null
-    if (input.lead_id    !== undefined) headerUpdate.lead_id     = input.lead_id
-    if (input.customer_id !== undefined) headerUpdate.customer_id = input.customer_id
-    if (input.stage      !== undefined && isAdmin) headerUpdate.stage = input.stage
+    if (input.title       !== undefined) headerUpdate.title        = input.title || null
+    if (input.notes       !== undefined) headerUpdate.notes        = input.notes || null
+    if (input.lead_id     !== undefined) headerUpdate.lead_id      = input.lead_id
+    if (input.customer_id !== undefined) headerUpdate.customer_id  = input.customer_id
+    if (input.stage       !== undefined && isAdmin) headerUpdate.stage = input.stage
+    if (input.billed_to   !== undefined) headerUpdate.billed_to    = input.billed_to
+    if (input.shipped_to  !== undefined) headerUpdate.shipped_to   = input.shipped_to
 
     const { error: headerErr } = await supabase
       .from('quotations')

@@ -199,6 +199,44 @@ export default async function QuotationDetailPage({ params }: PageProps) {
         </div>
       </div>
 
+      {/* ── Billed To / Ship To ────────────────────────────────────── */}
+      {(() => {
+        const bt = (quotation as any).billed_to as Record<string, string> | null
+        const st = (quotation as any).shipped_to as Record<string, string> | null
+        if (!bt?.name && !st?.name) return null
+        return (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-0 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 overflow-hidden">
+            <div className="px-5 py-4 md:border-r border-zinc-100 dark:border-zinc-800">
+              <p className="text-xs font-semibold text-zinc-500 uppercase tracking-wide mb-2">Billed To</p>
+              {bt?.name ? (
+                <div className="space-y-0.5 text-sm">
+                  <p className="font-semibold text-zinc-900 dark:text-zinc-100">{bt.name}</p>
+                  {bt.gst_number && <p className="text-xs text-zinc-400">GSTIN: {bt.gst_number}</p>}
+                  {bt.phone && <p className="text-zinc-500">{bt.phone}</p>}
+                  {bt.address && <p className="text-zinc-500">{bt.address}</p>}
+                  {(bt.city || bt.state || bt.pincode) && (
+                    <p className="text-zinc-500">{[bt.city, bt.state, bt.pincode].filter(Boolean).join(', ')}</p>
+                  )}
+                </div>
+              ) : <p className="text-sm text-zinc-400">—</p>}
+            </div>
+            <div className="px-5 py-4">
+              <p className="text-xs font-semibold text-zinc-500 uppercase tracking-wide mb-2">Ship To</p>
+              {st?.name ? (
+                <div className="space-y-0.5 text-sm">
+                  <p className="font-semibold text-zinc-900 dark:text-zinc-100">{st.name}</p>
+                  {st.phone && <p className="text-zinc-500">{st.phone}</p>}
+                  {st.address && <p className="text-zinc-500">{st.address}</p>}
+                  {(st.city || st.state || st.pincode) && (
+                    <p className="text-zinc-500">{[st.city, st.state, st.pincode].filter(Boolean).join(', ')}</p>
+                  )}
+                </div>
+              ) : <p className="text-sm text-zinc-400">—</p>}
+            </div>
+          </div>
+        )
+      })()}
+
       {/* ── Line items ─────────────────────────────────────────────── */}
       <div className="rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 overflow-hidden">
         <div className="px-5 py-3.5 border-b border-zinc-100 dark:border-zinc-800">

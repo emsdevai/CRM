@@ -42,6 +42,30 @@ interface EditItem {
   gst_pct: number
 }
 
+interface AddressBlock {
+  name: string
+  gst_number: string
+  phone: string
+  address: string
+  city: string
+  state: string
+  pincode: string
+}
+
+const EMPTY_ADDRESS: AddressBlock = { name: '', gst_number: '', phone: '', address: '', city: '', state: '', pincode: '' }
+
+function addressFromCustomer(c: Customer): AddressBlock {
+  return {
+    name:       c.name ?? '',
+    gst_number: (c as any).gst_number ?? '',
+    phone:      c.phone ?? '',
+    address:    (c as any).address ?? '',
+    city:       (c as any).city ?? '',
+    state:      (c as any).state ?? '',
+    pincode:    (c as any).pincode ?? '',
+  }
+}
+
 export interface QuotationEditFormProps {
   quotationId: string
   initialTitle: string
@@ -52,6 +76,8 @@ export interface QuotationEditFormProps {
   initialLeadName: string | null
   initialCustomerId: string | null
   initialCustomerName: string | null
+  initialBilledTo: AddressBlock | null
+  initialShippedTo: AddressBlock | null
   initialItems: QuotationItem[]
   isAdmin: boolean
 }
@@ -216,7 +242,7 @@ function LeadPicker({
 
 function CustomerPicker({
   customerId, customerName, onChange,
-}: { customerId: string | null; customerName: string | null; onChange: (id: string | null, name: string | null) => void }) {
+}: { customerId: string | null; customerName: string | null; onChange: (id: string | null, name: string | null, customer?: Customer) => void }) {
   const [query,   setQuery]   = useState('')
   const [results, setResults] = useState<Customer[]>([])
   const [loading, setLoading] = useState(false)
@@ -237,7 +263,7 @@ function CustomerPicker({
   }
 
   function pick(c: Customer) {
-    onChange(c.id, c.name)
+    onChange(c.id, c.name, c)
     setQuery('')
     setResults([])
     setOpen(false)
@@ -286,6 +312,57 @@ function CustomerPicker({
 }
 
 // ---------------------------------------------------------------------------
+// Address fields component
+// ---------------------------------------------------------------------------
+function AddressFields({
+  label, value, onChange, showGst, disabled,
+}: { label: string; value: AddressBlock; onChange: (v: AddressBlock) => void; showGst?: boolean; disabled?: boolean }) {
+  function patch(field: keyof AddressBlock, val: string) {
+    onChange({ ...value, [field]: val })
+  }
+  return (
+    <div className="space-y-3">
+      <p className="text-xs font-semibold text-zinc-500 uppercase tracking-wide">{label}</p>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div>
+          <label className="text-xs text-zinc-500 mb-1 block">Name</label>
+          <input className={inputCls} disabled={disabled} value={value.name} onChange={(e) => patch('name', e.target.value)} placeholder="Customer / Company name" />
+        </div>
+        <div>
+          <label className="text-xs text-zinc-500 mb-1 block">Phone</label>
+          <input className={inputCls} disabled={disabled} value={value.phone} onChange={(e) => patch('phone', e.target.value)} placeholder="+91 …" />
+        </div>
+      </div>
+      {showGst && (
+        <div>
+          <label className="text-xs text-zinc-500 mb-1 block">GSTIN (optional)</label>
+          <input className={cn(inputCls, 'font-mono uppercase')} maxLength={15} disabled={disabled}
+            value={value.gst_number} onChange={(e) => patch('gst_number', e.target.value.toUpperCase())} placeholder="22AAAAA0000A1Z5" />
+        </div>
+      )}
+      <div>
+        <label className="text-xs text-zinc-500 mb-1 block">Address</label>
+        <input className={inputCls} disabled={disabled} value={value.address} onChange={(e) => patch('address', e.target.value)} placeholder="Street / House no." />
+      </div>
+      <div className="grid grid-cols-3 gap-3">
+        <div>
+          <label className="text-xs text-zinc-500 mb-1 block">City</label>
+          <input className={inputCls} disabled={disabled} value={value.city} onChange={(e) => patch('city', e.target.value)} placeholder="City" />
+        </div>
+        <div>
+          <label className="text-xs text-zinc-500 mb-1 block">State</label>
+          <input className={inputCls} disabled={disabled} value={value.state} onChange={(e) => patch('state', e.target.value)} placeholder="State" />
+        </div>
+        <div>
+          <label className="text-xs text-zinc-500 mb-1 block">Pincode</label>
+          <input className={inputCls} disabled={disabled} value={value.pincode} onChange={(e) => patch('pincode', e.target.value)} placeholder="000000" maxLength={6} />
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ---------------------------------------------------------------------------
 // Main form
 // ---------------------------------------------------------------------------
 export function QuotationEditForm({
@@ -298,6 +375,8 @@ export function QuotationEditForm({
   initialLeadName,
   initialCustomerId,
   initialCustomerName,
+  initialBilledTo,
+  initialShippedTo,
   initialItems,
   isAdmin,
 }: QuotationEditFormProps) {
@@ -315,6 +394,11 @@ export function QuotationEditForm({
   const [notes,    setNotes]    = useState(initialNotes)
   const [stage,    setStage]    = useState<QuotationStage>(initialStage)
   const [freight,  setFreight]  = useState(initialFreightCharges)
+
+  // Address blocks
+  const [billedTo,     setBilledTo]     = useState<AddressBlock>(initialBilledTo ?? EMPTY_ADDRESS)
+  const [shippedTo,    setShippedTo]    = useState<AddressBlock>(initialShippedTo ?? EMPTY_ADDRESS)
+  const [sameAsBilling, setSameAsBilling] = useState(false)
 
   // Line items
   const [items, setItems] = useState<EditItem[]>(
@@ -377,6 +461,8 @@ export function QuotationEditForm({
       notes: notes || null,
       stage: isAdmin ? stage : undefined,
       freight_charges: freight,
+      billed_to:  billedTo  as unknown as Record<string, string>,
+      shipped_to: (sameAsBilling ? billedTo : shippedTo) as unknown as Record<string, string>,
       items: items.map((item) => ({
         product_id: item.product_id,
         is_custom: item.is_custom,
@@ -418,7 +504,14 @@ export function QuotationEditForm({
 
         {mode === 'lead'
           ? <LeadPicker leadId={leadId} leadName={leadName} onChange={(id, name) => { setLeadId(id); setLeadName(name) }} />
-          : <CustomerPicker customerId={customerId} customerName={customerName} onChange={(id, name) => { setCustomerId(id); setCustomerName(name) }} />
+          : <CustomerPicker customerId={customerId} customerName={customerName} onChange={(id, name, customer) => {
+              setCustomerId(id); setCustomerName(name)
+              if (customer) {
+                const addr = addressFromCustomer(customer)
+                setBilledTo(addr)
+                if (sameAsBilling) setShippedTo(addr)
+              }
+            }} />
         }
       </div>
 
@@ -447,6 +540,37 @@ export function QuotationEditForm({
           <textarea rows={3} value={notes} onChange={(e) => setNotes(e.target.value)}
             placeholder="Any special remarks or conditions…"
             className={inputCls} disabled={saving} />
+        </div>
+      </div>
+
+      {/* ── Billed To / Ship To ──────────────────────────────────────────── */}
+      <div className="bg-white rounded-xl border border-zinc-200 p-5 space-y-6">
+        <h2 className="text-sm font-semibold text-zinc-800">Address</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:divide-x md:divide-zinc-100">
+          <AddressFields label="Billed To" value={billedTo} showGst onChange={setBilledTo} disabled={saving} />
+          <div className="md:pl-6 space-y-3">
+            <div className="flex items-center justify-between">
+              <p className="text-xs font-semibold text-zinc-500 uppercase tracking-wide">Ship To</p>
+              <label className="flex items-center gap-1.5 text-xs text-zinc-500 cursor-pointer select-none">
+                <input type="checkbox" checked={sameAsBilling}
+                  onChange={(e) => { setSameAsBilling(e.target.checked); if (e.target.checked) setShippedTo(billedTo) }}
+                  className="rounded border-zinc-300" />
+                Same as Billed To
+              </label>
+            </div>
+            {sameAsBilling ? (
+              <div className="text-xs text-zinc-400 space-y-0.5 py-2">
+                {billedTo.name    && <p className="font-medium text-zinc-600">{billedTo.name}</p>}
+                {billedTo.address && <p>{billedTo.address}</p>}
+                {(billedTo.city || billedTo.state || billedTo.pincode) && (
+                  <p>{[billedTo.city, billedTo.state, billedTo.pincode].filter(Boolean).join(', ')}</p>
+                )}
+                {!billedTo.name && !billedTo.address && <p className="italic">Fill in Billed To first</p>}
+              </div>
+            ) : (
+              <AddressFields label="" value={shippedTo} onChange={setShippedTo} disabled={saving} />
+            )}
+          </div>
         </div>
       </div>
 

@@ -53,6 +53,8 @@ export default async function QuotationEditPage({ params }: PageProps) {
         initialLeadName={lead?.name ?? null}
         initialCustomerId={customer?.id ?? null}
         initialCustomerName={customer?.name ?? null}
+        initialBilledTo={(quotation as any).billed_to ?? null}
+        initialShippedTo={(quotation as any).shipped_to ?? null}
         initialItems={(quotation.items as QuotationItem[]) ?? []}
         isAdmin={role === 'admin'}
       />
