@@ -50,11 +50,29 @@ export async function searchLeads(query: string): Promise<Lead[]> {
       q = q.in('assigned_to', ids)
     }
 
-    if (query.trim()) {
-      q = q.or(`name.ilike.%${query}%,phone.ilike.%${query}%,email.ilike.%${query}%`)
+    const trimmed = query.trim()
+    if (trimmed) {
+      // Phone-first: if query looks like a phone number, exact-match phone first
+      const isPhone = /^[\d\s+\-()]{7,}$/.test(trimmed)
+      if (isPhone) {
+        q = q.or(`phone.ilike.%${trimmed}%,name.ilike.%${trimmed}%`)
+      } else {
+        q = q.or(`name.ilike.%${trimmed}%,phone.ilike.%${trimmed}%,email.ilike.%${trimmed}%`)
+      }
     }
 
     const { data } = await q
+    if (!data) return []
+    // Phone exact-match rows bubble to top
+    const trimmed2 = query.trim()
+    if (trimmed2 && /^[\d\s+\-()]{7,}$/.test(trimmed2)) {
+      const digits = trimmed2.replace(/\D/g, '')
+      return (data as Lead[]).sort((a, b) => {
+        const aMatch = a.phone.replace(/\D/g, '').includes(digits) ? 0 : 1
+        const bMatch = b.phone.replace(/\D/g, '').includes(digits) ? 0 : 1
+        return aMatch - bMatch
+      })
+    }
     return (data ?? []) as Lead[]
   } catch {
     return []
@@ -92,13 +110,28 @@ export async function searchCustomers(query: string): Promise<Customer[]> {
       q = q.in('salesperson_id', ids)
     }
 
-    if (query.trim()) {
-      q = q.or(
-        `name.ilike.%${query}%,phone.ilike.%${query}%,customer_number.ilike.%${query}%`,
-      )
+    const trimmed = query.trim()
+    if (trimmed) {
+      const isPhone = /^[\d\s+\-()]{7,}$/.test(trimmed)
+      if (isPhone) {
+        q = q.or(`phone.ilike.%${trimmed}%,name.ilike.%${trimmed}%`)
+      } else {
+        q = q.or(`name.ilike.%${trimmed}%,phone.ilike.%${trimmed}%,customer_number.ilike.%${trimmed}%`)
+      }
     }
 
     const { data } = await q
+    if (!data) return []
+    // Phone matches first
+    const trimmed2 = query.trim()
+    if (trimmed2 && /^[\d\s+\-()]{7,}$/.test(trimmed2)) {
+      const digits = trimmed2.replace(/\D/g, '')
+      return (data as Customer[]).sort((a, b) => {
+        const aMatch = (a.phone ?? '').replace(/\D/g, '').includes(digits) ? 0 : 1
+        const bMatch = (b.phone ?? '').replace(/\D/g, '').includes(digits) ? 0 : 1
+        return aMatch - bMatch
+      })
+    }
     return (data ?? []) as Customer[]
   } catch {
     return []

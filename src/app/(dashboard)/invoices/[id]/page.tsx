@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import { notFound, redirect } from 'next/navigation'
-import { Download, Package, Phone, Printer } from 'lucide-react'
+import { Download, Package, Pencil, Phone, Printer } from 'lucide-react'
 import Image from 'next/image'
 import { createClient } from '@/lib/supabase/server'
 import { getInvoiceById } from '@/lib/actions/invoices'
@@ -62,11 +62,20 @@ export default async function InvoiceDetailPage({ params }: PageProps) {
               Print
             </Link>
             {role === 'admin' && (
-              <InvoiceAdminActions
-                invoiceId={id}
-                invoiceNo={invoice.invoice_no}
-                afterDelete="list"
-              />
+              <>
+                <Link
+                  href={`/invoices/${id}/edit`}
+                  className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium border border-zinc-200 dark:border-zinc-700 rounded-lg hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors text-zinc-700 dark:text-zinc-300"
+                >
+                  <Pencil className="w-3.5 h-3.5" />
+                  Edit
+                </Link>
+                <InvoiceAdminActions
+                  invoiceId={id}
+                  invoiceNo={invoice.invoice_no}
+                  afterDelete="list"
+                />
+              </>
             )}
           </div>
         }

@@ -153,8 +153,94 @@ export async function getInvoiceStats() {
 }
 
 // ---------------------------------------------------------------------------
-// UPDATE
+// UPDATE — admin full edit
 // ---------------------------------------------------------------------------
+
+export interface InvoiceItemInput {
+  product_id?: string | null
+  name: string
+  sku?: string | null
+  image_url?: string | null
+  qty: number
+  unit_price: number
+  discount_pct: number
+  gst_pct: number
+}
+
+export async function updateInvoiceFull(
+  id: string,
+  input: {
+    customer_id?: string | null
+    invoice_date?: string
+    notes?: string | null
+    items: InvoiceItemInput[]
+  },
+): Promise<{ error: string | null }> {
+  try {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return { error: 'Unauthorized' }
+
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', user.id)
+      .single()
+
+    if (profile?.role !== 'admin') return { error: 'Admin access required' }
+
+    // Recalculate totals
+    const calculated = input.items.map((item) => {
+      const lineBase = item.qty * item.unit_price
+      const lineDiscount = lineBase * (item.discount_pct / 100)
+      const taxable = lineBase - lineDiscount
+      const gstAmt = taxable * (item.gst_pct / 100)
+      return { ...item, lineBase, lineDiscount, taxable, gstAmt, lineTotal: taxable + gstAmt }
+    })
+
+    const subtotal = calculated.reduce((s, i) => s + i.lineBase, 0)
+    const discountTotal = calculated.reduce((s, i) => s + i.lineDiscount, 0)
+    const gstTotal = calculated.reduce((s, i) => s + i.gstAmt, 0)
+    const grandTotal = calculated.reduce((s, i) => s + i.lineTotal, 0)
+
+    // Update invoice header
+    const headerUpdate: Record<string, unknown> = {
+      subtotal, discount_total: discountTotal, gst_total: gstTotal, grand_total: grandTotal,
+    }
+    if (input.customer_id !== undefined) headerUpdate.customer_id = input.customer_id
+    if (input.invoice_date) headerUpdate.invoice_date = input.invoice_date
+
+    const { error: invErr } = await supabase.from('invoices').update(headerUpdate).eq('id', id)
+    if (invErr) return { error: invErr.message }
+
+    // Replace line items
+    await supabase.from('invoice_items').delete().eq('invoice_id', id)
+
+    if (calculated.length > 0) {
+      const { error: itemsErr } = await supabase.from('invoice_items').insert(
+        calculated.map((item) => ({
+          invoice_id: id,
+          product_id: item.product_id ?? null,
+          name: item.name,
+          sku: item.sku ?? '',
+          image_url: item.image_url ?? null,
+          qty: item.qty,
+          unit_price: item.unit_price,
+          discount_pct: item.discount_pct,
+          gst_pct: item.gst_pct,
+          line_total: item.lineTotal,
+        })),
+      )
+      if (itemsErr) return { error: itemsErr.message }
+    }
+
+    revalidatePath('/invoices')
+    revalidatePath(`/invoices/${id}`)
+    return { error: null }
+  } catch (err: any) {
+    return { error: err.message ?? 'Unexpected error' }
+  }
+}
 
 // ---------------------------------------------------------------------------
 // DELETE (admin only)

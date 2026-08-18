@@ -168,6 +168,18 @@ export async function createLead(data: {
     const assignedTo =
       profile.role === 'salesperson' ? user.id : (data.assigned_to ?? user.id)
 
+    // #17: Dedup by phone — return existing lead if same phone already registered
+    const normalizedPhone = data.phone.trim().replace(/\s+/g, '')
+    const { data: existingLead } = await supabase
+      .from('leads')
+      .select('*')
+      .or(`phone.eq.${normalizedPhone},phone.eq.${data.phone.trim()}`)
+      .maybeSingle()
+
+    if (existingLead) {
+      return { data: existingLead as Lead, error: null }
+    }
+
     const payload = {
       name: data.name,
       phone: data.phone,
