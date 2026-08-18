@@ -9,6 +9,7 @@ interface BarcodeDisplayProps {
   value: string
   sku: string
   productName: string
+  imageUrl?: string | null
   showPrintButton?: boolean
   className?: string
 }
@@ -19,6 +20,7 @@ export function BarcodeDisplay({
   value,
   sku,
   productName,
+  imageUrl,
   showPrintButton = true,
   className,
 }: BarcodeDisplayProps) {
@@ -80,14 +82,12 @@ export function BarcodeDisplay({
   }, [mode])
 
   // ── Print handler ──────────────────────────────────────────────────────────
-  function handlePrint() {
-    const printWindow = window.open('', '_blank', 'width=420,height=340')
+  async function handlePrint() {
+    const printWindow = window.open('', '_blank', 'width=480,height=520')
     if (!printWindow) return
 
     let codeBlock = ''
-
     if (mode === 'qr') {
-      // Grab the rendered QR SVG from the DOM
       const qrEl = document.getElementById(`qr-${sku}`)
       codeBlock = qrEl
         ? `<div style="display:flex;justify-content:center;">${qrEl.outerHTML}</div>`
@@ -97,6 +97,24 @@ export function BarcodeDisplay({
       codeBlock = barcodeEl
         ? `<div style="display:flex;justify-content:center;">${barcodeEl.outerHTML}</div>`
         : ''
+    }
+
+    // Fetch product image and convert to base64 so it prints reliably
+    let imgBlock = ''
+    if (imageUrl) {
+      try {
+        const res = await fetch(imageUrl)
+        if (res.ok) {
+          const blob = await res.blob()
+          const dataUri = await new Promise<string>((resolve) => {
+            const reader = new FileReader()
+            reader.onloadend = () => resolve(reader.result as string)
+            reader.readAsDataURL(blob)
+          })
+          imgBlock = `<img src="${dataUri}" alt="${productName}"
+            style="width:120px;height:120px;object-fit:cover;border-radius:10px;border:1px solid #e4e4e7;margin-bottom:4px" />`
+        }
+      } catch { /* no image — just skip */ }
     }
 
     printWindow.document.write(`
@@ -116,7 +134,7 @@ export function BarcodeDisplay({
               font-family: ui-sans-serif, system-ui, sans-serif;
               background: #fff;
               padding: 24px;
-              gap: 10px;
+              gap: 8px;
             }
             .product-name {
               font-size: 14px;
@@ -124,18 +142,21 @@ export function BarcodeDisplay({
               color: #18181b;
               text-align: center;
               max-width: 280px;
+              margin-top: 6px;
             }
             .sku {
               font-size: 12px;
               color: #71717a;
               letter-spacing: 0.06em;
-              text-transform: uppercase;
+              font-family: monospace;
             }
             svg { display: block; max-width: 100%; }
+            * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
             @media print { @page { margin: 0.5cm; } }
           </style>
         </head>
         <body>
+          ${imgBlock}
           <p class="product-name">${productName}</p>
           ${codeBlock}
           <p class="sku">SKU: ${sku}</p>
@@ -147,7 +168,7 @@ export function BarcodeDisplay({
     setTimeout(() => {
       printWindow.print()
       printWindow.close()
-    }, 400)
+    }, 500)
   }
 
   return (

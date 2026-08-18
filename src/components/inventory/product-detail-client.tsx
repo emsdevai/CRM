@@ -182,6 +182,7 @@ export function ProductDetailClient({
                 value={product.barcode || product.sku}
                 sku={product.sku}
                 productName={product.name}
+                imageUrl={product.image_url}
                 showPrintButton
               />
             </div>
