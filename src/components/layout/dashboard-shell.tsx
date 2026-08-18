@@ -26,7 +26,7 @@ export function DashboardShell({ profile, children }: DashboardShellProps) {
           profile={profile}
           onMenuToggle={() => setSidebarOpen((prev) => !prev)}
         />
-        <main className="flex-1 overflow-y-auto p-6">{children}</main>
+        <main className="flex-1 overflow-y-auto p-6" style={{ scrollbarGutter: 'stable' }}>{children}</main>
       </div>
     </div>
   )

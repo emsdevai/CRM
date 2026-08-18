@@ -133,27 +133,41 @@
 }
 
 /* ============================================================
-   Custom Scrollbar
+   Custom Scrollbar — always-visible, 8 px right-side rail
    ============================================================ */
 ::-webkit-scrollbar {
-  width: 5px;
-  height: 5px;
+  width: 8px;
+  height: 8px;
 }
 ::-webkit-scrollbar-track {
-  background: transparent;
-}
-::-webkit-scrollbar-thumb {
-  background-color: #d4d4d8;
+  background: #f1f1f4;
   border-radius: 9999px;
 }
+::-webkit-scrollbar-thumb {
+  background-color: #c4c4c8;
+  border-radius: 9999px;
+  border: 2px solid #f1f1f4;   /* creates padding-inside effect */
+}
 ::-webkit-scrollbar-thumb:hover {
-  background-color: #a1a1aa;
+  background-color: #8a8a8e;
+}
+/* Firefox */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #c4c4c8 #f1f1f4;
+}
+.dark ::-webkit-scrollbar-track {
+  background: #27272a;
 }
 .dark ::-webkit-scrollbar-thumb {
-  background-color: #3f3f46;
+  background-color: #52525b;
+  border-color: #27272a;
 }
 .dark ::-webkit-scrollbar-thumb:hover {
-  background-color: #52525b;
+  background-color: #71717a;
+}
+.dark * {
+  scrollbar-color: #52525b #27272a;
 }
 
 /* ============================================================
