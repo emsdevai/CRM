@@ -86,8 +86,8 @@ export async function getInvoiceById(id: string): Promise<{
       .select(
         `
         *,
-        items:invoice_items(*),
-        customer:customers(id, name, customer_number, phone, email, address, city, state),
+        items:invoice_items(*, product:products(id, hsn_code)),
+        customer:customers(id, name, customer_number, phone, email, address, city, state, gst_number, pincode),
         salesperson:profiles!invoices_salesperson_id_fkey(id, name, phone),
         quotation:quotations(id)
       `,
