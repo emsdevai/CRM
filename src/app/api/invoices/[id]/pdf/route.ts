@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { prefetchItemImages } from '@/lib/utils/fetch-image'
 
 export async function GET(
   _request: NextRequest,
@@ -93,6 +94,9 @@ export async function GET(
   const cardSurcharge = cardSurchargePct > 0 ? ((subtotal - discountTotal + gstTotal + freightCharges) * cardSurchargePct) / 100 : 0
   const grandTotal: number = (invoice.grand_total as number) ?? (subtotal - discountTotal + gstTotal + freightCharges + cardSurcharge)
 
+  // Pre-fetch all product images server-side → embed as base64 so they print reliably
+  const imageCache = await prefetchItemImages(items)
+
   const itemRows = items
     .map((item, idx) => {
       const lineBase = (item.qty ?? 0) * (item.unit_price ?? 0)
@@ -106,9 +110,12 @@ export async function GET(
         <td style="padding:8px 10px;border-bottom:1px solid #f0f0f0;font-size:12px;color:#888;text-align:center">${idx + 1}</td>
         <td style="padding:8px 10px;border-bottom:1px solid #f0f0f0">
           <div style="display:flex;align-items:center;gap:10px">
-            ${item.image_url
-              ? `<img src="${item.image_url}" alt="" style="width:72px;height:72px;object-fit:cover;border-radius:6px;border:1px solid #e8e8e8;flex-shrink:0" />`
-              : `<div style="width:72px;height:72px;border-radius:6px;background:#f4f4f4;border:1px solid #e8e8e8;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:9px;color:#bbb">IMG</div>`
+            ${(() => {
+                const src = item.image_url ? (imageCache.get(item.image_url) ?? item.image_url) : null
+                return src
+                  ? `<img src="${src}" alt="" style="width:72px;height:72px;object-fit:cover;border-radius:6px;border:1px solid #e8e8e8;flex-shrink:0" />`
+                  : `<div style="width:72px;height:72px;border-radius:6px;background:#f4f4f4;border:1px solid #e8e8e8;flex-shrink:0"></div>`
+              })()
             }
             <div>
               <div style="font-size:13px;font-weight:600;color:#111;line-height:1.3">${item.name ?? '—'}</div>
