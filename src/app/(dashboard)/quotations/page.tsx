@@ -7,6 +7,7 @@ import { PageHeader } from '@/components/shared/page-header'
 import { QuotationStageBadge } from '@/components/shared/status-badge'
 import { formatCurrency, formatDate } from '@/lib/utils'
 import { ApprovalActions } from '@/components/quotations/approval-actions'
+import { QuotationAdminActions } from '@/components/quotations/quotation-admin-actions'
 import type { QuotationStage } from '@/lib/types/database'
 
 const STAGE_TABS = [
@@ -266,12 +267,21 @@ export default async function QuotationsPage({ searchParams }: PageProps) {
                         </span>
                       </td>
                       <td className="px-4 py-3 text-right">
-                        <Link
-                          href={`/quotations/${q.id}`}
-                          className="px-3 py-1.5 text-xs font-medium border border-zinc-200 dark:border-zinc-700 rounded-lg hover:bg-zinc-50 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-300"
-                        >
-                          View
-                        </Link>
+                        <div className="flex items-center justify-end gap-2">
+                          <Link
+                            href={`/quotations/${q.id}`}
+                            className="px-3 py-1.5 text-xs font-medium border border-zinc-200 dark:border-zinc-700 rounded-lg hover:bg-zinc-50 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-300 transition-colors"
+                          >
+                            View
+                          </Link>
+                          {isManagerOrAdmin && (
+                            <QuotationAdminActions
+                              quotationId={q.id}
+                              shortId={q.id.slice(0, 8).toUpperCase()}
+                              afterDelete="stay"
+                            />
+                          )}
+                        </div>
                       </td>
                     </tr>
                   )

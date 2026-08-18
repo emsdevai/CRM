@@ -1,19 +1,67 @@
 'use client'
 
+import { useState, useTransition } from 'react'
 import Link from 'next/link'
-import { Eye, Phone, Users } from 'lucide-react'
+import { useRouter } from 'next/navigation'
+import { Eye, Phone, Trash2, Users } from 'lucide-react'
+import { toast } from 'sonner'
 import { formatCurrency, formatDate, getInitials } from '@/lib/utils'
 import { StageBadge } from '@/components/shared/status-badge'
 import { EmptyState } from '@/components/shared/empty-state'
+import { ConfirmDialog } from '@/components/shared/confirm-dialog'
+import { deleteLead } from '@/lib/actions/leads'
 import type { LeadWithAssignee } from '@/lib/types/database'
 
 interface LeadTableProps {
   leads: LeadWithAssignee[]
   loading?: boolean
+  isAdmin?: boolean
   onView?: (id: string) => void
 }
 
-export function LeadTable({ leads, loading, onView }: LeadTableProps) {
+// ── Per-row delete button ───────────────────────────────────────────────────
+function LeadDeleteButton({ leadId, leadName }: { leadId: string; leadName: string }) {
+  const router = useRouter()
+  const [open, setOpen] = useState(false)
+  const [loading, startTransition] = useTransition()
+
+  function handleDelete() {
+    startTransition(async () => {
+      const result = await deleteLead(leadId)
+      if (result.error) {
+        toast.error(result.error)
+      } else {
+        toast.success(`Lead "${leadName}" deleted`)
+        router.refresh()
+      }
+    })
+  }
+
+  return (
+    <>
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        className="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium text-red-600 border border-red-200 bg-red-50 hover:bg-red-100 rounded-lg transition-colors"
+      >
+        <Trash2 className="w-3.5 h-3.5" />
+        Delete
+      </button>
+      <ConfirmDialog
+        open={open}
+        onOpenChange={setOpen}
+        title="Delete this lead?"
+        description={`"${leadName}" and all associated data will be permanently removed. This cannot be undone.`}
+        confirmLabel="Delete Lead"
+        variant="destructive"
+        loading={loading}
+        onConfirm={handleDelete}
+      />
+    </>
+  )
+}
+
+export function LeadTable({ leads, loading, isAdmin, onView }: LeadTableProps) {
   // ── Skeleton ────────────────────────────────────────────────────────────
   if (loading) {
     return (
@@ -139,8 +187,8 @@ export function LeadTable({ leads, loading, onView }: LeadTableProps) {
               </span>
             </div>
 
-            {/* View action */}
-            <div className="hidden sm:flex justify-end col-span-full sm:col-span-1">
+            {/* View / Delete actions (desktop) */}
+            <div className="hidden sm:flex justify-end items-center gap-2 col-span-full sm:col-span-1">
               <Link
                 href={`/leads/${lead.id}`}
                 onClick={onView ? () => onView(lead.id) : undefined}
@@ -149,20 +197,28 @@ export function LeadTable({ leads, loading, onView }: LeadTableProps) {
                 <Eye className="w-3.5 h-3.5" />
                 View
               </Link>
+              {isAdmin && (
+                <LeadDeleteButton leadId={lead.id} leadName={lead.name} />
+              )}
             </div>
 
-            {/* Mobile: full-width view link */}
+            {/* Mobile: view + delete */}
             <div className="sm:hidden col-span-2 flex items-center justify-between pt-1">
               <span className="text-xs text-zinc-400">
                 {lead.source ?? ''} · {formatDate(lead.created_at)}
               </span>
-              <Link
-                href={`/leads/${lead.id}`}
-                className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium text-zinc-700 bg-white border border-zinc-300 rounded-lg hover:bg-zinc-50 transition-colors"
-              >
-                <Eye className="w-3 h-3" />
-                View
-              </Link>
+              <div className="flex items-center gap-2">
+                <Link
+                  href={`/leads/${lead.id}`}
+                  className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium text-zinc-700 bg-white border border-zinc-300 rounded-lg hover:bg-zinc-50 transition-colors"
+                >
+                  <Eye className="w-3 h-3" />
+                  View
+                </Link>
+                {isAdmin && (
+                  <LeadDeleteButton leadId={lead.id} leadName={lead.name} />
+                )}
+              </div>
             </div>
           </div>
         ))}

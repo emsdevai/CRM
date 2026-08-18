@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/server'
 import { PageHeader } from '@/components/shared/page-header'
 import { EmptyState } from '@/components/shared/empty-state'
 import { formatCurrency, formatDate } from '@/lib/utils'
+import { CustomerDeleteButton } from '@/components/customers/customer-delete-button'
 import type { Customer, Profile } from '@/lib/types/database'
 
 interface CustomersPageProps {
@@ -40,6 +41,7 @@ export default async function CustomersPage({
 
   const profile = profileData as Profile | null
   if (!profile) redirect('/login')
+  const isAdmin = profile.role === 'admin'
 
   // ── Scope IDs ─────────────────────────────────────────────────────────────
   // Admin + salesperson see ALL customers (empty = no filter).
@@ -270,8 +272,8 @@ export default async function CustomersPage({
                   </span>
                 </div>
 
-                {/* View */}
-                <div className="flex justify-end">
+                {/* View / Admin actions */}
+                <div className="flex justify-end items-center gap-2">
                   <Link
                     href={`/customers/${customer.id}`}
                     className="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium text-zinc-700 bg-white border border-zinc-300 rounded-lg hover:bg-zinc-50 transition-colors"
@@ -279,6 +281,12 @@ export default async function CustomersPage({
                     <Eye className="w-3.5 h-3.5" />
                     View
                   </Link>
+                  {isAdmin && (
+                    <CustomerDeleteButton
+                      customerId={customer.id}
+                      customerName={customer.name ?? 'Customer'}
+                    />
+                  )}
                 </div>
               </div>
             ))}

@@ -268,7 +268,7 @@ export function LeadsShell({
 
       {/* ── Content ─────────────────────────────────────────────────────────── */}
       {currentView === 'list' ? (
-        <LeadTable leads={leads} />
+        <LeadTable leads={leads} isAdmin={userRole === 'admin'} />
       ) : (
         <LeadPipeline leads={leads} />
       )}
