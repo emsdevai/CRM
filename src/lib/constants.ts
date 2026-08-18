@@ -47,7 +47,7 @@ export const NAV_ITEMS: NavItem[] = [
     icon:  'LayoutGrid',
   },
   {
-    label: 'Offers',
+    label: 'Scan & Quote',
     href:  '/scan',
     icon:  'Tag',
   },
