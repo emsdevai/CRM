@@ -903,3 +903,110 @@ export async function updateQuotationMeta(
     return { error: 'Unexpected error' }
   }
 }
+
+// ---------------------------------------------------------------------------
+// UPDATE FULL (all fields + items) — admin or owner of Draft
+// ---------------------------------------------------------------------------
+export async function updateQuotationFull(
+  id: string,
+  input: {
+    lead_id?: string | null
+    customer_id?: string | null
+    title?: string | null
+    notes?: string | null
+    stage?: QuotationStage
+    freight_charges?: number
+    items: QuotationItemInput[]
+  },
+): Promise<{ error: string | null }> {
+  try {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return { error: 'Unauthorized' }
+
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', user.id)
+      .single()
+
+    const { data: quotation } = await supabase
+      .from('quotations')
+      .select('created_by, stage')
+      .eq('id', id)
+      .single()
+
+    if (!quotation) return { error: 'Quotation not found' }
+
+    const isAdmin = profile?.role === 'admin'
+    const isOwnerAndDraft = quotation.created_by === user.id && quotation.stage === 'Draft'
+    if (!isAdmin && !isOwnerAndDraft) {
+      return { error: 'Only admins or the owner of a Draft quotation can edit it' }
+    }
+
+    if (input.items.length === 0) return { error: 'Add at least one item' }
+
+    // Recalculate line items
+    const calculatedItems = input.items.map((item) => {
+      const line_base = item.unit_price * item.qty
+      const line_discount = line_base * (item.discount_pct / 100)
+      const taxable = line_base - line_discount
+      const gst_amt = taxable * (item.gst_pct / 100)
+      const line_total = taxable + gst_amt
+      return { ...item, line_base, line_discount, taxable, gst_amt, line_total }
+    })
+
+    const subtotal       = calculatedItems.reduce((s, i) => s + i.line_base,     0)
+    const discount_total = calculatedItems.reduce((s, i) => s + i.line_discount, 0)
+    const gst_total      = calculatedItems.reduce((s, i) => s + i.gst_amt,       0)
+    const freight_charges = input.freight_charges ?? 0
+    const grand_total    = calculatedItems.reduce((s, i) => s + i.line_total,    0) + freight_charges
+
+    const headerUpdate: Record<string, unknown> = {
+      subtotal, discount_total, gst_total, freight_charges, grand_total,
+    }
+    if (input.title      !== undefined) headerUpdate.title       = input.title || null
+    if (input.notes      !== undefined) headerUpdate.notes       = input.notes || null
+    if (input.lead_id    !== undefined) headerUpdate.lead_id     = input.lead_id
+    if (input.customer_id !== undefined) headerUpdate.customer_id = input.customer_id
+    if (input.stage      !== undefined && isAdmin) headerUpdate.stage = input.stage
+
+    const { error: headerErr } = await supabase
+      .from('quotations')
+      .update(headerUpdate)
+      .eq('id', id)
+    if (headerErr) return { error: headerErr.message }
+
+    // Replace all items
+    await supabase.from('quotation_items').delete().eq('quotation_id', id)
+
+    const { error: itemsErr } = await supabase.from('quotation_items').insert(
+      calculatedItems.map((item, idx) => ({
+        quotation_id: id,
+        product_id: item.product_id ?? null,
+        is_custom: item.is_custom ?? false,
+        custom_description: item.custom_description ?? null,
+        name: item.name,
+        sku: item.sku ?? '',
+        image_url: item.image_url ?? null,
+        qty: item.qty,
+        unit_price: item.unit_price,
+        discount_pct: item.discount_pct,
+        gst_pct: item.gst_pct,
+        line_base: item.line_base,
+        line_discount: item.line_discount,
+        taxable: item.taxable,
+        gst_amt: item.gst_amt,
+        line_total: item.line_total,
+        sort_order: idx + 1,
+      })),
+    )
+    if (itemsErr) return { error: itemsErr.message }
+
+    revalidatePath('/quotations')
+    revalidatePath(`/quotations/${id}`)
+    return { error: null }
+  } catch (err: unknown) {
+    return { error: (err as Error).message ?? 'Unexpected error' }
+  }
+}

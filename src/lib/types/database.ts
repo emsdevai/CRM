@@ -243,6 +243,9 @@ export interface QuotationItem {
 // ---------------------------------------------------------------------------
 // 10. Invoice
 // ---------------------------------------------------------------------------
+export type PaymentMethod = 'Cash' | 'UPI' | 'Bank Transfer' | 'Cheque' | 'Card'
+export type PaymentCardType = 'Debit Card' | 'Credit Card'
+
 export interface Invoice {
   id: string
   invoice_no: string
@@ -254,6 +257,8 @@ export interface Invoice {
   gst_total: number | null
   grand_total: number | null
   payment_status: PaymentStatus
+  payment_method: PaymentMethod | null
+  payment_card_type: PaymentCardType | null
   salesperson_id: string | null
   invoice_date: string
   created_at: string

@@ -27,12 +27,17 @@ interface EditItem {
   gst_pct: number
 }
 
+const PAYMENT_METHODS = ['Cash', 'UPI', 'Bank Transfer', 'Cheque', 'Card'] as const
+const CARD_TYPES      = ['Debit Card', 'Credit Card'] as const
+
 interface InvoiceEditFormProps {
   invoiceId: string
   invoiceNo: string
   initialDate: string
   initialCustomerId: string | null
   initialCustomerName: string | null
+  initialPaymentMethod: string | null
+  initialPaymentCardType: string | null
   initialItems: InvoiceItem[]
 }
 
@@ -226,6 +231,8 @@ export function InvoiceEditForm({
   initialDate,
   initialCustomerId,
   initialCustomerName,
+  initialPaymentMethod,
+  initialPaymentCardType,
   initialItems,
 }: InvoiceEditFormProps) {
   const router = useRouter()
@@ -233,6 +240,8 @@ export function InvoiceEditForm({
   const [customerId, setCustomerId] = useState<string | null>(initialCustomerId)
   const [customerName, setCustomerName] = useState<string | null>(initialCustomerName)
   const [invoiceDate, setInvoiceDate] = useState(initialDate.slice(0, 10))
+  const [paymentMethod,   setPaymentMethod]   = useState<string>(initialPaymentMethod ?? '')
+  const [paymentCardType, setPaymentCardType] = useState<string>(initialPaymentCardType ?? '')
   const [saving, setSaving] = useState(false)
 
   const [items, setItems] = useState<EditItem[]>(
@@ -304,6 +313,8 @@ export function InvoiceEditForm({
     const { error } = await updateInvoiceFull(invoiceId, {
       customer_id: customerId,
       invoice_date: invoiceDate,
+      payment_method:    paymentMethod    || null,
+      payment_card_type: paymentCardType  || null,
       items: itemPayload,
     })
     setSaving(false)
@@ -334,6 +345,39 @@ export function InvoiceEditForm({
               disabled={saving}
             />
           </div>
+          <div className="space-y-1.5">
+            <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">Payment Method</label>
+            <select
+              value={paymentMethod}
+              onChange={(e) => {
+                setPaymentMethod(e.target.value)
+                if (e.target.value !== 'Card') setPaymentCardType('')
+              }}
+              className={inputCls}
+              disabled={saving}
+            >
+              <option value="">— Select method —</option>
+              {PAYMENT_METHODS.map((m) => (
+                <option key={m} value={m}>{m}</option>
+              ))}
+            </select>
+          </div>
+          {paymentMethod === 'Card' && (
+            <div className="space-y-1.5">
+              <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">Card Type</label>
+              <select
+                value={paymentCardType}
+                onChange={(e) => setPaymentCardType(e.target.value)}
+                className={inputCls}
+                disabled={saving}
+              >
+                <option value="">— Select card type —</option>
+                {CARD_TYPES.map((t) => (
+                  <option key={t} value={t}>{t}</option>
+                ))}
+              </select>
+            </div>
+          )}
         </div>
       </div>
 

@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 import { getQuotationById } from '@/lib/actions/quotations'
 import { PageHeader } from '@/components/shared/page-header'
 import { QuotationEditForm } from '@/components/quotations/quotation-edit-form'
+import type { QuotationItem } from '@/lib/types/database'
 
 interface PageProps {
   params: Promise<{ id: string }>
@@ -28,8 +29,11 @@ export default async function QuotationEditPage({ params }: PageProps) {
 
   const shortId = quotation.id.slice(0, 8).toUpperCase()
 
+  const lead     = quotation.lead     as { id: string; name: string } | null
+  const customer = quotation.customer as { id: string; name: string } | null
+
   return (
-    <div className="max-w-2xl mx-auto space-y-6">
+    <div className="max-w-4xl mx-auto space-y-6">
       <PageHeader
         title={`Edit Quotation #${shortId}`}
         breadcrumb={[
@@ -44,6 +48,12 @@ export default async function QuotationEditPage({ params }: PageProps) {
         initialTitle={(quotation as any).title ?? ''}
         initialNotes={quotation.notes ?? ''}
         initialStage={quotation.stage}
+        initialFreightCharges={quotation.freight_charges ?? 0}
+        initialLeadId={lead?.id ?? null}
+        initialLeadName={lead?.name ?? null}
+        initialCustomerId={customer?.id ?? null}
+        initialCustomerName={customer?.name ?? null}
+        initialItems={(quotation.items as QuotationItem[]) ?? []}
         isAdmin={role === 'admin'}
       />
     </div>

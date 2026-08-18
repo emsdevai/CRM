@@ -19,8 +19,9 @@ export default function NewQuotationPage() {
   const searchParams = useSearchParams()
   const { profile, loading: userLoading } = useUser()
 
-  const leadId = searchParams.get('leadId') ?? undefined
-  const customerId = searchParams.get('customerId') ?? undefined
+  // Support both camelCase (?leadId=) and snake_case (?lead_id=) — leads page sends lead_id
+  const leadId = searchParams.get('leadId') ?? searchParams.get('lead_id') ?? undefined
+  const customerId = searchParams.get('customerId') ?? searchParams.get('customer_id') ?? undefined
 
   const [discountRule, setDiscountRule] = useState<DiscountRule | null>(null)
   const [ruleLoading, setRuleLoading] = useState(true)

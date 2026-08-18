@@ -34,10 +34,11 @@ export default async function InvoiceDetailPage({ params }: PageProps) {
   const cgst = (invoice.gst_total ?? 0) / 2
   const sgst = (invoice.gst_total ?? 0) / 2
 
-  // Optional columns from migration 0005
-  const freightCharges: number = (invoice as any).freight_charges ?? 0
-  const paymentMode: string = (invoice as any).payment_mode ?? ''
+  // Optional columns
+  const freightCharges: number   = (invoice as any).freight_charges   ?? 0
+  const paymentMode: string      = (invoice as any).payment_method    ?? (invoice as any).payment_mode ?? ''
   const paymentReference: string = (invoice as any).payment_reference ?? ''
+  const paymentCardType: string  = (invoice as any).payment_card_type ?? ''
   const cardSurchargePct: number = (invoice as any).card_surcharge_pct ?? 0
   const cardSurcharge = cardSurchargePct > 0
     ? (((invoice.subtotal ?? 0) - (invoice.discount_total ?? 0) + (invoice.gst_total ?? 0) + freightCharges) * cardSurchargePct) / 100
@@ -192,7 +193,10 @@ export default async function InvoiceDetailPage({ params }: PageProps) {
               <PaymentBadge status={invoice.payment_status} className="text-sm px-3 py-1" />
               {paymentMode && (
                 <span className="text-sm text-zinc-600 dark:text-zinc-400">
-                  Mode: <span className="font-semibold text-zinc-800 dark:text-zinc-200">{paymentMode}</span>
+                  via <span className="font-semibold text-zinc-800 dark:text-zinc-200">{paymentMode}</span>
+                  {paymentCardType && (
+                    <span className="ml-1 text-zinc-500">({paymentCardType})</span>
+                  )}
                   {paymentReference && (
                     <span className="ml-1 text-zinc-400">· Ref: {paymentReference}</span>
                   )}
