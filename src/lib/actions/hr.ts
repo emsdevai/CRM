@@ -70,6 +70,8 @@ export async function saveStoreSettings(input: {
   store_latitude: number | null
   store_longitude: number | null
   radius_meters: number
+  clock_in_time?: string | null
+  clock_out_time?: string | null
 }): Promise<{ error: string | null }> {
   try {
     const { user, profile } = await getCurrentUser()
@@ -546,10 +548,12 @@ export async function clockIn(): Promise<{ error: string | null }> {
 
     if (existing?.check_in) return { error: 'Already clocked in today' }
 
-    // Determine status: Late if after 09:30
+    // Determine status: Late if after configured clock_in_time (default 09:30)
+    const { data: settings } = await service.from('store_settings').select('clock_in_time').eq('id', 1).single()
+    const [lateHour, lateMins] = ((settings?.clock_in_time as string | null) ?? '09:30').split(':').map(Number)
     const hours = now.getHours()
     const mins = now.getMinutes()
-    const isLate = hours > 9 || (hours === 9 && mins > 30)
+    const isLate = hours > lateHour || (hours === lateHour && mins > lateMins)
 
     if (existing) {
       await service.from('attendance_records').update({

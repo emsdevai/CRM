@@ -414,6 +414,10 @@ export interface StoreSettings {
   store_longitude: number | null
   /** metres */
   radius_meters: number
+  /** "HH:MM" — employees arriving after this time are marked Late */
+  clock_in_time: string | null
+  /** "HH:MM" — expected end-of-day time */
+  clock_out_time: string | null
   updated_by: string | null
   updated_at: string
 }

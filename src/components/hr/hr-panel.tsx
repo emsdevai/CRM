@@ -839,6 +839,8 @@ function AttendanceTab({
       store_latitude: null,
       store_longitude: null,
       radius_meters: 200,
+      clock_in_time: '09:30',
+      clock_out_time: '17:30',
       updated_by: null,
       updated_at: '',
     },
@@ -921,6 +923,8 @@ function AttendanceTab({
       store_latitude: settings.store_latitude,
       store_longitude: settings.store_longitude,
       radius_meters: settings.radius_meters,
+      clock_in_time: settings.clock_in_time ?? '09:30',
+      clock_out_time: settings.clock_out_time ?? '17:30',
     })
     setSettingsSaving(false)
     if (r.error) { toast.error(r.error); return }
@@ -1143,13 +1147,47 @@ function AttendanceTab({
           <div className="flex items-center justify-between px-5 py-4 border-b border-zinc-100">
             <div className="flex items-center gap-2">
               <Settings2 className="w-4 h-4 text-zinc-500" />
-              <h2 className="text-sm font-semibold text-zinc-900">Store Geofence Settings</h2>
+              <h2 className="text-sm font-semibold text-zinc-900">Attendance Settings</h2>
             </div>
             {settingsDirty && (
               <span className="text-xs text-amber-600 font-medium">Unsaved changes</span>
             )}
           </div>
           <div className="p-5 space-y-5">
+
+            {/* ── Clock-in / Clock-out times ─────────────────────────────── */}
+            <div>
+              <p className="text-xs font-semibold text-zinc-500 uppercase tracking-wide mb-3">Attendance Times</p>
+              <div className="flex flex-wrap gap-5">
+                <div>
+                  <label className="block text-xs font-medium text-zinc-500 mb-1">
+                    Clock-in time (Late after this)
+                  </label>
+                  <input
+                    type="time"
+                    value={settings.clock_in_time ?? '09:30'}
+                    onChange={(e) => { setSettings((s) => ({ ...s, clock_in_time: e.target.value })); setSettingsDirty(true) }}
+                    className="px-3 py-1.5 text-sm rounded-lg border border-zinc-200 bg-zinc-50 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                  />
+                  <p className="text-xs text-zinc-400 mt-1">Employees arriving after this are marked <span className="text-amber-600 font-medium">Late</span></p>
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-zinc-500 mb-1">
+                    Expected clock-out time
+                  </label>
+                  <input
+                    type="time"
+                    value={settings.clock_out_time ?? '17:30'}
+                    onChange={(e) => { setSettings((s) => ({ ...s, clock_out_time: e.target.value })); setSettingsDirty(true) }}
+                    className="px-3 py-1.5 text-sm rounded-lg border border-zinc-200 bg-zinc-50 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                  />
+                  <p className="text-xs text-zinc-400 mt-1">Reference end-of-day time for your team</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="border-t border-zinc-100" />
+
             {/* Enable toggle */}
             <label className="flex items-start gap-3 cursor-pointer">
               <div className="relative mt-0.5">
