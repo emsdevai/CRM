@@ -134,7 +134,7 @@ export function TeamMemberForm({
         const { error } = await updateTeamMember(member.id, {
           name: values.name,
           role: values.role,
-          manager_id: values.manager_id ?? null,
+          manager_id: values.manager_id || null,   // '' → null (no manager)
           phone: values.phone ?? undefined,
           annual_target: values.annual_target,
           max_discount_pct: values.max_discount_pct ?? null,
@@ -150,7 +150,7 @@ export function TeamMemberForm({
           email: values.email ?? '',
           password: values.password ?? '',
           role: values.role,
-          manager_id: values.manager_id ?? null,
+          manager_id: values.manager_id || null,   // '' → null (no manager)
           phone: values.phone ?? undefined,
           annual_target: values.annual_target,
           max_discount_pct: values.max_discount_pct ?? null,

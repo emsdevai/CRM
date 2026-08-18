@@ -402,7 +402,7 @@ export function ProductForm({
 
       {/* ── Type ─────────────────────────────────────────────────────────── */}
       <div>
-        <label htmlFor="type" className={labelCls}>Product Type</label>
+        <label htmlFor="type" className={labelCls}>Product Type <span className="text-red-500">*</span></label>
         <select
           id="type"
           {...register('type')}
