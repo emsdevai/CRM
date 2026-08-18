@@ -259,6 +259,7 @@ export interface Invoice {
   payment_status: PaymentStatus
   payment_method: PaymentMethod | null
   payment_card_type: PaymentCardType | null
+  card_surcharge_pct: number
   salesperson_id: string | null
   invoice_date: string
   created_at: string

@@ -38,6 +38,7 @@ interface InvoiceEditFormProps {
   initialCustomerName: string | null
   initialPaymentMethod: string | null
   initialPaymentCardType: string | null
+  initialCardSurchargePct: number
   initialItems: InvoiceItem[]
 }
 
@@ -233,6 +234,7 @@ export function InvoiceEditForm({
   initialCustomerName,
   initialPaymentMethod,
   initialPaymentCardType,
+  initialCardSurchargePct,
   initialItems,
 }: InvoiceEditFormProps) {
   const router = useRouter()
@@ -240,8 +242,9 @@ export function InvoiceEditForm({
   const [customerId, setCustomerId] = useState<string | null>(initialCustomerId)
   const [customerName, setCustomerName] = useState<string | null>(initialCustomerName)
   const [invoiceDate, setInvoiceDate] = useState(initialDate.slice(0, 10))
-  const [paymentMethod,   setPaymentMethod]   = useState<string>(initialPaymentMethod ?? '')
-  const [paymentCardType, setPaymentCardType] = useState<string>(initialPaymentCardType ?? '')
+  const [paymentMethod,     setPaymentMethod]     = useState<string>(initialPaymentMethod ?? '')
+  const [paymentCardType,   setPaymentCardType]   = useState<string>(initialPaymentCardType ?? '')
+  const [cardSurchargePct,  setCardSurchargePct]  = useState<number>(initialCardSurchargePct > 0 ? initialCardSurchargePct : 2)
   const [saving, setSaving] = useState(false)
 
   const [items, setItems] = useState<EditItem[]>(
@@ -296,6 +299,10 @@ export function InvoiceEditForm({
     },
     { subtotal: 0, discount: 0, gst: 0, grand: 0 },
   )
+  const surchargeAmt = paymentMethod === 'Card' && cardSurchargePct > 0
+    ? totals.grand * cardSurchargePct / 100
+    : 0
+  const grandWithSurcharge = totals.grand + surchargeAmt
 
   async function handleSave() {
     if (items.length === 0) { toast.error('Add at least one item'); return }
@@ -313,8 +320,9 @@ export function InvoiceEditForm({
     const { error } = await updateInvoiceFull(invoiceId, {
       customer_id: customerId,
       invoice_date: invoiceDate,
-      payment_method:    paymentMethod    || null,
-      payment_card_type: paymentCardType  || null,
+      payment_method:      paymentMethod    || null,
+      payment_card_type:   paymentCardType  || null,
+      card_surcharge_pct:  paymentMethod === 'Card' ? cardSurchargePct : 0,
       items: itemPayload,
     })
     setSaving(false)
@@ -351,7 +359,11 @@ export function InvoiceEditForm({
               value={paymentMethod}
               onChange={(e) => {
                 setPaymentMethod(e.target.value)
-                if (e.target.value !== 'Card') setPaymentCardType('')
+                if (e.target.value !== 'Card') {
+                  setPaymentCardType('')
+                } else if (cardSurchargePct === 0) {
+                  setCardSurchargePct(2) // default 2% when switching to Card
+                }
               }}
               className={inputCls}
               disabled={saving}
@@ -363,20 +375,41 @@ export function InvoiceEditForm({
             </select>
           </div>
           {paymentMethod === 'Card' && (
-            <div className="space-y-1.5">
-              <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">Card Type</label>
-              <select
-                value={paymentCardType}
-                onChange={(e) => setPaymentCardType(e.target.value)}
-                className={inputCls}
-                disabled={saving}
-              >
-                <option value="">— Select card type —</option>
-                {CARD_TYPES.map((t) => (
-                  <option key={t} value={t}>{t}</option>
-                ))}
-              </select>
-            </div>
+            <>
+              <div className="space-y-1.5">
+                <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">Card Type</label>
+                <select
+                  value={paymentCardType}
+                  onChange={(e) => setPaymentCardType(e.target.value)}
+                  className={inputCls}
+                  disabled={saving}
+                >
+                  <option value="">— Select card type —</option>
+                  {CARD_TYPES.map((t) => (
+                    <option key={t} value={t}>{t}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                  Card Surcharge %
+                  <span className="ml-1.5 text-xs font-normal text-zinc-400">(charged to customer)</span>
+                </label>
+                <div className="relative">
+                  <input
+                    type="number"
+                    min="0"
+                    max="10"
+                    step="0.5"
+                    value={cardSurchargePct}
+                    onChange={(e) => setCardSurchargePct(Math.max(0, Math.min(10, Number(e.target.value))))}
+                    className={inputCls}
+                    disabled={saving}
+                  />
+                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-zinc-400 pointer-events-none">%</span>
+                </div>
+              </div>
+            </>
           )}
         </div>
       </div>
@@ -467,7 +500,7 @@ export function InvoiceEditForm({
 
       {/* Totals */}
       <div className="flex justify-end">
-        <div className="w-64 text-sm divide-y divide-zinc-100 dark:divide-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl overflow-hidden">
+        <div className="w-72 text-sm divide-y divide-zinc-100 dark:divide-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl overflow-hidden">
           <div className="flex justify-between px-4 py-2">
             <span className="text-zinc-500">Subtotal</span>
             <span className="font-medium">{formatCurrency(totals.subtotal)}</span>
@@ -482,9 +515,21 @@ export function InvoiceEditForm({
             <span className="text-zinc-500">GST</span>
             <span className="font-medium">{formatCurrency(totals.gst)}</span>
           </div>
+          {surchargeAmt > 0 && (
+            <div className="flex justify-between px-4 py-2 bg-amber-50/60 dark:bg-amber-900/10">
+              <span className="text-amber-700 dark:text-amber-400">
+                Card Surcharge ({cardSurchargePct}%)
+              </span>
+              <span className="font-medium text-amber-700 dark:text-amber-400">
+                +{formatCurrency(surchargeAmt)}
+              </span>
+            </div>
+          )}
           <div className="flex justify-between px-4 py-3 bg-zinc-50 dark:bg-zinc-800/50">
             <span className="font-bold text-zinc-900 dark:text-zinc-100">Grand Total</span>
-            <span className="font-bold text-lg text-zinc-900 dark:text-zinc-100">{formatCurrency(totals.grand)}</span>
+            <span className="font-bold text-lg text-zinc-900 dark:text-zinc-100">
+              {formatCurrency(grandWithSurcharge)}
+            </span>
           </div>
         </div>
       </div>

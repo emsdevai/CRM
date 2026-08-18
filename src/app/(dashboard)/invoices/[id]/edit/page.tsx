@@ -48,6 +48,7 @@ export default async function InvoiceEditPage({ params }: PageProps) {
         initialCustomerName={customer?.name ?? null}
         initialPaymentMethod={(invoice as any).payment_method ?? null}
         initialPaymentCardType={(invoice as any).payment_card_type ?? null}
+        initialCardSurchargePct={(invoice as any).card_surcharge_pct ?? 0}
         initialItems={(invoice.items as InvoiceItem[]) ?? []}
       />
     </div>
