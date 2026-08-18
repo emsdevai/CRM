@@ -108,7 +108,7 @@ export const productSchema = z.object({
     .min(3, 'SKU must be at least 3 characters')
     .max(50)
     .regex(/^[A-Z0-9-_]+$/i, 'SKU can only contain letters, numbers, hyphens, and underscores'),
-  barcode: z.string().max(100).optional().or(z.literal('')),
+  hsn_code: z.string().max(20).optional().or(z.literal('')),
   name: z.string().min(2, 'Product name is required').max(200),
   category: z.string().max(100).optional().or(z.literal('')),
   subcategory: z.string().max(100).optional().or(z.literal('')),

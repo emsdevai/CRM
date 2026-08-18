@@ -266,7 +266,7 @@ function ProductSearchDropdown({
   return (
     <div
       ref={containerRef}
-      className="absolute left-0 z-50 mt-1 w-96 max-h-80 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 shadow-xl flex flex-col"
+      className="absolute left-0 z-50 mt-1 w-[calc(100vw-2rem)] max-w-md max-h-80 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 shadow-xl flex flex-col sm:w-96"
     >
       <div className="p-2 border-b border-zinc-100 dark:border-zinc-800 flex-none">
         <div className="relative">
@@ -314,7 +314,7 @@ function ProductSearchDropdown({
                 )}
               </div>
               <div className="min-w-0 flex-1">
-                <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100 truncate">{product.name}</p>
+                <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100 break-words leading-snug">{product.name}</p>
                 <p className="text-xs text-zinc-500">{product.sku} · GST {product.gst_pct}%</p>
               </div>
               <div className="text-right flex-none">
@@ -1203,7 +1203,7 @@ function LineItemRow({
             )}
           </div>
           <div className="min-w-0">
-            <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100 truncate max-w-40">
+            <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100 break-words">
               {item.name}
             </p>
             {item.sku && (

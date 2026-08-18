@@ -3,9 +3,10 @@
 import { useEffect, useRef, useState } from 'react'
 import { useForm, type Resolver } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { ImageOff, Upload, X, Loader2 } from 'lucide-react'
+import { ImageOff, RefreshCw, Upload, X, Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
+import { generateNextSku } from '@/lib/actions/inventory'
 import {
   FURNITURE_CATEGORIES,
   SUBCATEGORIES_BY_CATEGORY,
@@ -41,6 +42,7 @@ export function ProductForm({
 }: ProductFormProps) {
   const supabase = createClient()
 
+  const [skuGenerating, setSkuGenerating] = useState(false)
   const [imageFile, setImageFile] = useState<File | null>(null)
   const [imagePreview, setImagePreview] = useState<string | null>(
     product?.image_url ?? null,
@@ -59,7 +61,7 @@ export function ProductForm({
     resolver: zodResolver(productSchema) as Resolver<ProductFormValues>,
     defaultValues: {
       sku: product?.sku ?? '',
-      barcode: product?.barcode ?? '',
+      hsn_code: (product as any)?.hsn_code ?? '',
       name: product?.name ?? '',
       category: product?.category ?? '',
       subcategory: product?.subcategory ?? '',
@@ -150,6 +152,14 @@ export function ProductForm({
 
     const { data } = supabase.storage.from('product-images').getPublicUrl(path)
     return data.publicUrl
+  }
+
+  async function handleGenerateSku() {
+    setSkuGenerating(true)
+    const category = watch('category') || ''
+    const sku = await generateNextSku(category)
+    setValue('sku', sku)
+    setSkuGenerating(false)
   }
 
   async function handleFormSubmit(values: ProductFormValues) {
@@ -259,28 +269,45 @@ export function ProductForm({
           <label htmlFor="sku" className={labelCls}>
             SKU <span className="text-red-500">*</span>
           </label>
-          <input
-            id="sku"
-            type="text"
-            placeholder="e.g. LR-SOF-0001"
-            {...register('sku')}
-            className={inputCls(!!errors.sku)}
-          />
+          <div className="flex gap-2">
+            <input
+              id="sku"
+              type="text"
+              placeholder="e.g. JB-LR-001"
+              {...register('sku')}
+              className={cn(inputCls(!!errors.sku), 'flex-1')}
+            />
+            <button
+              type="button"
+              onClick={handleGenerateSku}
+              disabled={skuGenerating || isLoading}
+              title="Auto-generate next SKU"
+              className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium text-zinc-700 border border-zinc-300 bg-white hover:bg-zinc-50 transition-colors disabled:opacity-50 whitespace-nowrap"
+            >
+              {skuGenerating
+                ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                : <RefreshCw className="w-3.5 h-3.5" />
+              }
+              <span className="hidden sm:inline">Auto</span>
+            </button>
+          </div>
           {errors.sku && <p className={errorCls}>{errors.sku.message}</p>}
         </div>
       </div>
 
-      {/* ── Barcode ─────────────────────────────────────────────────────── */}
+      {/* ── HSN Code ─────────────────────────────────────────────────────── */}
       <div>
-        <label htmlFor="barcode" className={labelCls}>Barcode</label>
+        <label htmlFor="hsn_code" className={labelCls}>
+          HSN Code
+          <span className="ml-1.5 text-xs text-zinc-400 font-normal">(for GST invoice)</span>
+        </label>
         <input
-          id="barcode"
+          id="hsn_code"
           type="text"
-          placeholder="EAN-13 or custom barcode"
-          {...register('barcode')}
-          className={inputCls(!!errors.barcode)}
+          placeholder="e.g. 9403 (wooden furniture)"
+          {...register('hsn_code')}
+          className={inputCls(!!(errors as any).hsn_code)}
         />
-        {errors.barcode && <p className={errorCls}>{errors.barcode.message}</p>}
       </div>
 
       {/* ── Category / Subcategory / Family ──────────────────────────────── */}

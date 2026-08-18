@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import { notFound, redirect } from 'next/navigation'
-import { Download, Package, Phone, Printer, User } from 'lucide-react'
+import { Download, Package, Phone, Printer } from 'lucide-react'
 import Image from 'next/image'
 import { createClient } from '@/lib/supabase/server'
 import { getInvoiceById } from '@/lib/actions/invoices'
@@ -133,23 +133,29 @@ export default async function InvoiceDetailPage({ params }: PageProps) {
 
           <div className="px-6 py-4">
             <p className="text-xs font-semibold text-zinc-500 uppercase tracking-wide mb-2">
-              Sold By
+              Ship To
             </p>
-            {invoice.salesperson ? (
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-full bg-zinc-200 dark:bg-zinc-700 flex items-center justify-center">
-                  <User className="w-4 h-4 text-zinc-500" />
-                </div>
-                <div>
-                  <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
-                    {invoice.salesperson.name}
+            {invoice.customer ? (
+              <div className="space-y-1">
+                <p className="text-base font-semibold text-zinc-900 dark:text-zinc-100">
+                  {(invoice.customer as { name: string }).name}
+                </p>
+                {(invoice.customer as { phone?: string | null }).phone && (
+                  <div className="flex items-center gap-1.5 text-sm text-zinc-500">
+                    <Phone className="w-3.5 h-3.5" />
+                    {(invoice.customer as { phone: string }).phone}
+                  </div>
+                )}
+                {(invoice.customer as { address?: string | null }).address && (
+                  <p className="text-sm text-zinc-500">
+                    {(invoice.customer as { address: string }).address}
                   </p>
-                  {(invoice.salesperson as { phone?: string | null }).phone && (
-                    <p className="text-xs text-zinc-500">
-                      {(invoice.salesperson as { phone: string }).phone}
-                    </p>
-                  )}
-                </div>
+                )}
+                {(invoice.customer as { city?: string | null }).city && (
+                  <p className="text-sm text-zinc-500">
+                    {[(invoice.customer as { city?: string }).city, (invoice.customer as { state?: string }).state].filter(Boolean).join(', ')}
+                  </p>
+                )}
               </div>
             ) : (
               <p className="text-sm text-zinc-400">—</p>

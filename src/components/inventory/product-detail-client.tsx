@@ -67,7 +67,8 @@ export function ProductDetailClient({
       try {
         const { data, error } = await updateProduct(product.id, {
           ...values,
-          barcode: values.barcode || null,
+          barcode: null,
+          hsn_code: values.hsn_code || null,
           image_url: values.image_url || null,
           description: values.description || null,
           category: values.category || null,

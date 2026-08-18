@@ -3,6 +3,7 @@ import { notFound, redirect } from 'next/navigation'
 import {
   Building2,
   Calendar,
+  Download,
   FileText,
   Package,
   Phone,
@@ -61,6 +62,14 @@ export default async function QuotationDetailPage({ params }: PageProps) {
         ]}
         actions={
           <div className="flex items-center gap-2">
+            <Link
+              href={`/api/quotations/${id}/pdf`}
+              target="_blank"
+              className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium border border-zinc-200 dark:border-zinc-700 rounded-lg hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors text-zinc-700 dark:text-zinc-300"
+            >
+              <Download className="w-3.5 h-3.5" />
+              Download PDF
+            </Link>
             <QuotationStageBadge stage={quotation.stage} />
             {quotation.stage === 'Draft' && (
               <Link

@@ -493,6 +493,7 @@ export async function bulkImportProducts(rows: BulkImportRow[]): Promise<{
         margin_pct: null,
         stock: row.stock != null ? Math.max(0, Math.floor(Number(row.stock))) : 0,
         reorder_level: row.reorder_level != null ? Math.max(0, Math.floor(Number(row.reorder_level))) : 5,
+        hsn_code: null,
         image_url: null,
         description: row.description?.trim() || null,
         metadata: null,
@@ -526,5 +527,48 @@ export async function bulkImportProducts(rows: BulkImportRow[]): Promise<{
       errors: [],
       error: err instanceof Error ? err.message : 'Unknown error',
     }
+  }
+}
+
+// ---------------------------------------------------------------------------
+// generateNextSku — auto-generates the next available SKU in series
+// Format: JB-{CAT}-{NNN}  e.g. JB-LR-007
+// ---------------------------------------------------------------------------
+const CATEGORY_CODES: Record<string, string> = {
+  'Living Room': 'LR',
+  'Bedroom':     'BR',
+  'Dining':      'DI',
+  'Office':      'OF',
+  'Outdoor':     'OT',
+  'Storage':     'ST',
+  'Decor':       'DC',
+}
+
+export async function generateNextSku(category: string): Promise<string> {
+  try {
+    const supabase = await createClient()
+    const code = CATEGORY_CODES[category] ?? 'XX'
+    const prefix = `JB-${code}-`
+
+    // Find all SKUs with this prefix, get the highest number
+    const { data } = await supabase
+      .from('products')
+      .select('sku')
+      .ilike('sku', `${prefix}%`)
+      .order('sku', { ascending: false })
+      .limit(1)
+
+    let nextNum = 1
+    if (data && data.length > 0) {
+      const lastSku = (data[0] as { sku: string }).sku
+      const numPart = lastSku.replace(prefix, '')
+      const parsed = parseInt(numPart, 10)
+      if (!isNaN(parsed)) nextNum = parsed + 1
+    }
+
+    return `${prefix}${String(nextNum).padStart(3, '0')}`
+  } catch {
+    // Fallback: timestamp-based
+    return `JB-XX-${Date.now().toString().slice(-4)}`
   }
 }

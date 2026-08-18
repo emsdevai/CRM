@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Bell, Menu, Search, X } from 'lucide-react'
+import { Menu, Search, X } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { cn, getInitials } from '@/lib/utils'
 import type { Profile } from '@/lib/types/database'
@@ -303,20 +303,6 @@ export function Topbar({ profile, onMenuToggle }: TopbarProps) {
 
       {/* ── Right actions ────────────────────────────────────────────── */}
       <div className="flex items-center gap-2 ml-auto flex-shrink-0">
-        {/* Notification bell */}
-        <button
-          type="button"
-          className={cn(
-            'p-2 rounded-lg text-zinc-500',
-            'hover:text-zinc-700 hover:bg-zinc-100',
-            'transition-colors focus-visible:outline-none',
-            'focus-visible:ring-2 focus-visible:ring-blue-700',
-          )}
-          aria-label="Notifications"
-        >
-          <Bell className="w-5 h-5" aria-hidden="true" />
-        </button>
-
         {/* User avatar + name */}
         <div className="flex items-center gap-2.5 pl-1">
           <div

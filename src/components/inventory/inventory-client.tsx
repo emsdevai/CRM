@@ -193,7 +193,8 @@ export function InventoryClient({
       try {
         const { error } = await createProduct({
           ...values,
-          barcode: values.barcode || null,
+          barcode: null,
+          hsn_code: values.hsn_code || null,
           image_url: values.image_url || null,
           description: values.description || null,
           category: values.category || null,
@@ -225,7 +226,8 @@ export function InventoryClient({
       try {
         const { error } = await updateProduct(editProduct.id, {
           ...values,
-          barcode: values.barcode || null,
+          barcode: null,
+          hsn_code: values.hsn_code || null,
           image_url: values.image_url || null,
           description: values.description || null,
           category: values.category || null,

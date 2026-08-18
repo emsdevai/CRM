@@ -87,6 +87,7 @@ export interface Product {
   id: string
   sku: string
   barcode: string | null
+  hsn_code: string | null
   name: string
   category: string | null
   subcategory: string | null
