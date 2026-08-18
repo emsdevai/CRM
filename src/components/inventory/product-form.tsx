@@ -6,6 +6,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { ImageOff, RefreshCw, Upload, X, Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
+import { compressImage } from '@/lib/utils/compress-image'
 import { generateNextSku } from '@/lib/actions/inventory'
 import {
   FURNITURE_CATEGORIES,
@@ -48,6 +49,7 @@ export function ProductForm({
     product?.image_url ?? null,
   )
   const [uploading, setUploading] = useState(false)
+  const [compressing, setCompressing] = useState(false)
   const [imageError, setImageError] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -105,8 +107,8 @@ export function ProductForm({
     }
   }, [watchedPrice, watchedCost, isAdmin, setValue])
 
-  // Handle file selection
-  function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+  // Handle file selection — compress to ≤ 450 KB WebP before storing in state
+  async function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
     if (!file) return
 
@@ -115,18 +117,30 @@ export function ProductForm({
       if (fileInputRef.current) fileInputRef.current.value = ''
       return
     }
-    if (file.size > 650 * 1024) {
-      setImageError(
-        `File is too large (${(file.size / 1024).toFixed(0)} KB). Max allowed size is 650 KB.`,
-      )
-      if (fileInputRef.current) fileInputRef.current.value = ''
-      return
-    }
 
     setImageError(null)
-    setImageFile(file)
-    const objectUrl = URL.createObjectURL(file)
-    setImagePreview(objectUrl)
+    setCompressing(true)
+
+    try {
+      const ready = file.size > 400 * 1024
+        ? await compressImage(file)   // compress anything > 400 KB
+        : file                         // tiny images skip compression
+
+      setImageFile(ready)
+      const objectUrl = URL.createObjectURL(ready)
+      setImagePreview(objectUrl)
+
+      if (file.size > 400 * 1024) {
+        toast.success(
+          `Image compressed: ${(file.size / 1024).toFixed(0)} KB → ${(ready.size / 1024).toFixed(0)} KB`,
+        )
+      }
+    } catch {
+      setImageError('Failed to compress image. Please try a different file.')
+      if (fileInputRef.current) fileInputRef.current.value = ''
+    } finally {
+      setCompressing(false)
+    }
   }
 
   function handleRemoveImage() {
@@ -138,7 +152,8 @@ export function ProductForm({
   }
 
   async function uploadImage(file: File): Promise<string | null> {
-    const ext = file.name.split('.').pop() ?? 'jpg'
+    // Extension is always .webp after compression; fall back gracefully for tiny files
+    const ext = file.type === 'image/webp' ? 'webp' : (file.name.split('.').pop() ?? 'jpg')
     const path = `products/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`
 
     const { error } = await supabase.storage
@@ -177,7 +192,7 @@ export function ProductForm({
     await onSubmit({ ...values, image_url: imageUrl })
   }
 
-  const isLoading = loading || uploading
+  const isLoading = loading || uploading || compressing
 
   // ── Field styles ──────────────────────────────────────────────────────────
 
@@ -233,12 +248,28 @@ export function ProductForm({
             />
             <label
               htmlFor="product-image-input"
-              className="inline-flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium text-zinc-700 border border-zinc-300 bg-white hover:bg-zinc-50 cursor-pointer transition-colors"
+              className={cn(
+                'inline-flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium border transition-colors',
+                compressing
+                  ? 'text-zinc-400 border-zinc-200 bg-zinc-50 cursor-not-allowed pointer-events-none'
+                  : 'text-zinc-700 border-zinc-300 bg-white hover:bg-zinc-50 cursor-pointer',
+              )}
             >
-              <Upload className="w-4 h-4" />
-              {imagePreview ? 'Change Image' : 'Upload Image'}
+              {compressing ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Compressing…
+                </>
+              ) : (
+                <>
+                  <Upload className="w-4 h-4" />
+                  {imagePreview ? 'Change Image' : 'Upload Image'}
+                </>
+              )}
             </label>
-            <p className="mt-1.5 text-xs text-zinc-500">PNG, JPG, WebP up to 650 KB</p>
+            <p className="mt-1.5 text-xs text-zinc-500">
+              Any photo — auto-compressed to WebP for fast loading
+            </p>
             {imageError && (
               <p className="mt-1.5 flex items-start gap-1 text-xs text-red-600">
                 <span className="mt-px leading-none">⚠</span>
