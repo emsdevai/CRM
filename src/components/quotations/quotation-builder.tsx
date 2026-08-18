@@ -553,50 +553,6 @@ export default function QuotationBuilder({
     }
   }, [initialLeadId, initialCustomerId])
 
-  // ─── Scanner callbacks ────────────────────────────────────────────────────
-  const startScanner = useCallback(async () => {
-    setScannerError(null)
-    try {
-      const { Html5Qrcode } = await import('html5-qrcode')
-      const qrCode = new Html5Qrcode('qb-qr-reader')
-      await qrCode.start(
-        { facingMode: 'environment' },
-        { fps: 10, qrbox: { width: 240, height: 240 } },
-        async (decodedText) => {
-          await qrCode.stop().catch(() => {})
-          scannerRef.current = null
-          setScannerActive(false)
-          setScannerOpen(false)
-          const { data, error } = await getProductByBarcode(decodedText.trim())
-          if (error || !data) {
-            toast.error(error ?? 'Product not found for this barcode')
-          } else {
-            addProductItem(data)
-            toast.success(`Added: ${data.name}`)
-          }
-        },
-        () => {},
-      )
-      scannerRef.current = { clear: () => qrCode.stop() }
-      setScannerActive(true)
-    } catch (err) {
-      setScannerError(err instanceof Error ? err.message : 'Failed to start camera')
-      setScannerActive(false)
-    }
-  }, [addProductItem])
-
-  const stopScanner = useCallback(async () => {
-    if (scannerRef.current) {
-      await scannerRef.current.clear().catch(() => {})
-      scannerRef.current = null
-    }
-    setScannerActive(false)
-  }, [])
-
-  useEffect(() => {
-    return () => { if (scannerRef.current) scannerRef.current.clear().catch(() => {}) }
-  }, [])
-
   // ─── Totals ───────────────────────────────────────────────────────────────
   const totals = useMemo(() => {
     const itemsTotal = items.reduce((s, i) => s + i.line_total, 0)
@@ -684,6 +640,50 @@ export default function QuotationBuilder({
 
   const removeItem = useCallback((id: string) => {
     setItems((prev) => prev.filter((item) => item.id !== id))
+  }, [])
+
+  // ─── Scanner callbacks (declared after addProductItem to avoid TDZ) ───────
+  const startScanner = useCallback(async () => {
+    setScannerError(null)
+    try {
+      const { Html5Qrcode } = await import('html5-qrcode')
+      const qrCode = new Html5Qrcode('qb-qr-reader')
+      await qrCode.start(
+        { facingMode: 'environment' },
+        { fps: 10, qrbox: { width: 240, height: 240 } },
+        async (decodedText) => {
+          await qrCode.stop().catch(() => {})
+          scannerRef.current = null
+          setScannerActive(false)
+          setScannerOpen(false)
+          const { data, error } = await getProductByBarcode(decodedText.trim())
+          if (error || !data) {
+            toast.error(error ?? 'Product not found for this barcode')
+          } else {
+            addProductItem(data)
+            toast.success(`Added: ${data.name}`)
+          }
+        },
+        () => {},
+      )
+      scannerRef.current = { clear: () => qrCode.stop() }
+      setScannerActive(true)
+    } catch (err) {
+      setScannerError(err instanceof Error ? err.message : 'Failed to start camera')
+      setScannerActive(false)
+    }
+  }, [addProductItem])
+
+  const stopScanner = useCallback(async () => {
+    if (scannerRef.current) {
+      await scannerRef.current.clear().catch(() => {})
+      scannerRef.current = null
+    }
+    setScannerActive(false)
+  }, [])
+
+  useEffect(() => {
+    return () => { if (scannerRef.current) scannerRef.current.clear().catch(() => {}) }
   }, [])
 
   // ─── Submit handlers ──────────────────────────────────────────────────────

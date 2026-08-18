@@ -188,19 +188,19 @@ export default async function CustomersPage({
         {/* Header */}
         <div className="hidden sm:grid grid-cols-[auto_2fr_1fr_1fr_auto_auto_auto] items-center gap-4 px-4 py-2.5 bg-zinc-50 border-b border-zinc-200">
           {[
-            'Customer#',
-            'Name & Email',
-            'City',
-            'Total Spent',
-            'Orders',
-            'Since',
-            '',
-          ].map((col, i) => (
+            { label: 'Customer#',   cls: '' },
+            { label: 'Name & Email', cls: '' },
+            { label: 'City',         cls: '' },
+            { label: 'Total Spent',  cls: '' },
+            { label: 'Orders',       cls: 'text-center' },
+            { label: 'Since',        cls: '' },
+            { label: '',             cls: '' },
+          ].map(({ label, cls }, i) => (
             <span
               key={i}
-              className="text-xs font-semibold text-zinc-500 uppercase tracking-wider"
+              className={`text-xs font-semibold text-zinc-500 uppercase tracking-wider ${cls}`}
             >
-              {col}
+              {label}
             </span>
           ))}
         </div>

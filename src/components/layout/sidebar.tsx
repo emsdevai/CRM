@@ -95,13 +95,15 @@ export function Sidebar({ profile, isOpen, onClose }: SidebarProps) {
         {/* ── Brand header ───────────────────────────────────────────── */}
         <div className="flex items-center justify-between px-5 py-[18px] border-b border-white/10 flex-shrink-0">
           <div className="flex items-center gap-3 min-w-0">
-            <span
-              className="text-2xl leading-none select-none"
-              aria-hidden="true"
-              role="img"
-            >
-              🛋
-            </span>
+            {/* Logo oval */}
+            <div className="flex-shrink-0 w-12 h-7 rounded-sm overflow-hidden bg-white">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src="/jangid-logo.svg"
+                alt="Jangid Brothers"
+                className="w-full h-full object-contain"
+              />
+            </div>
             <div className="min-w-0">
               <p className="text-white font-bold text-sm leading-tight truncate">
                 Jangid Brothers

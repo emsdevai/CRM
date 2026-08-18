@@ -1,0 +1,17 @@
+<svg viewBox="0 0 260 140" xmlns="http://www.w3.org/2000/svg">
+  <!-- outer oval -->
+  <ellipse cx="130" cy="70" rx="122" ry="57" fill="white" stroke="#8B3910" stroke-width="5.5"/>
+  <!-- inner oval (double-border effect) -->
+  <ellipse cx="130" cy="70" rx="114" ry="49" fill="none" stroke="#8B3910" stroke-width="1.8"/>
+  <!-- brand name -->
+  <text
+    x="130" y="88"
+    text-anchor="middle"
+    font-family="Georgia,'Times New Roman',serif"
+    font-style="italic"
+    font-weight="700"
+    font-size="52"
+    fill="#8B3910"
+    letter-spacing="1.5"
+  >Jangid</text>
+</svg>
