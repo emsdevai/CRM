@@ -14,6 +14,7 @@ import type {
   LeaveStatus,
   AttendanceStatus,
   Profile,
+  StoreSettings,
 } from '@/lib/types/database'
 
 // ---------------------------------------------------------------------------
@@ -42,6 +43,56 @@ async function getCurrentUser() {
 
 function isAdminOrManager(profile: Profile) {
   return profile.role === 'admin' || profile.role === 'manager'
+}
+
+// ---------------------------------------------------------------------------
+// STORE SETTINGS (geofence config)
+// ---------------------------------------------------------------------------
+
+export async function getStoreSettings(): Promise<{ data: StoreSettings | null; error: string | null }> {
+  try {
+    const service = createServiceClient()
+    const { data, error } = await service
+      .from('store_settings')
+      .select('*')
+      .eq('id', 1)
+      .single()
+    if (error) return { data: null, error: error.message }
+    return { data: data as StoreSettings, error: null }
+  } catch (err: any) {
+    return { data: null, error: err.message }
+  }
+}
+
+export async function saveStoreSettings(input: {
+  geo_check_enabled: boolean
+  geo_strict_mode: boolean
+  store_latitude: number | null
+  store_longitude: number | null
+  radius_meters: number
+}): Promise<{ error: string | null }> {
+  try {
+    const { user, profile } = await getCurrentUser()
+    if (profile.role !== 'admin') throw new Error('Admin only')
+
+    const service = createServiceClient()
+    const { error } = await service
+      .from('store_settings')
+      .upsert(
+        {
+          id: 1,
+          ...input,
+          updated_by: user.id,
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: 'id' },
+      )
+    if (error) return { error: error.message }
+    revalidatePath('/hr')
+    return { error: null }
+  } catch (err: any) {
+    return { error: err.message }
+  }
 }
 
 // ---------------------------------------------------------------------------

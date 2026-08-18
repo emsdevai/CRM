@@ -12,6 +12,7 @@ import {
   getAllEmployeesLeaveBalances,
   getMyLeaveApplications,
   getTodayAttendance,
+  getStoreSettings,
 } from '@/lib/actions/hr'
 
 export default async function HRPage() {
@@ -29,11 +30,13 @@ export default async function HRPage() {
     myBalancesResult,
     myApplicationsResult,
     todayAttendanceResult,
+    storeSettingsResult,
   ] = await Promise.all([
     getLeaveTypes(),
     getMyLeaveBalances(),
     getMyLeaveApplications(),
     getTodayAttendance(),
+    getStoreSettings(),
   ])
 
   // Admin-only fetches (skipped entirely for non-admin users)
@@ -61,6 +64,7 @@ export default async function HRPage() {
         allPendingApplications={allApplicationsResult.data as any}
         todayAllAttendance={todayAllResult.data as any}
         allEmployeeBalances={allBalancesResult.data as any}
+        storeSettings={storeSettingsResult.data}
       />
     </div>
   )

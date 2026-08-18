@@ -392,6 +392,23 @@ export type OfferInsert = Omit<Offer, 'id' | 'created_at' | 'updated_at'>
 export type OfferUpdate = Partial<Omit<Offer, 'id' | 'created_at' | 'updated_at'>>
 
 // =============================================================================
+// Store / App settings
+// =============================================================================
+
+export interface StoreSettings {
+  id: number
+  geo_check_enabled: boolean
+  /** true = block non-admins outside radius; false = warn only */
+  geo_strict_mode: boolean
+  store_latitude: number | null
+  store_longitude: number | null
+  /** metres */
+  radius_meters: number
+  updated_by: string | null
+  updated_at: string
+}
+
+// =============================================================================
 // HR Module Types
 // =============================================================================
 

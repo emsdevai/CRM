@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useTransition, useEffect } from 'react'
+import { useState, useTransition, useEffect, useCallback } from 'react'
 import { format, parseISO, getDaysInMonth, getDay } from 'date-fns'
 import { toast } from 'sonner'
 import {
@@ -15,8 +15,15 @@ import {
   Award,
   X,
   AlertCircle,
+  MapPin,
+  Navigation,
+  Shield,
+  ShieldOff,
+  Settings2,
+  Loader2,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { haversineDistance, getGPSPosition } from '@/lib/utils/geo'
 import {
   applyForLeave,
   cancelLeaveApplication,
@@ -29,6 +36,7 @@ import {
   getAttendanceSummary,
   getAllLeaveApplications,
   getAllEmployeesTodayAttendance,
+  saveStoreSettings,
 } from '@/lib/actions/hr'
 import type {
   Profile,
@@ -39,6 +47,7 @@ import type {
   AttendanceRecordFull,
   AttendanceStatus,
   LeaveStatus,
+  StoreSettings,
 } from '@/lib/types/database'
 
 // ---------------------------------------------------------------------------
@@ -86,6 +95,7 @@ interface HRPanelProps {
   allPendingApplications: LeaveApplicationFull[]
   todayAllAttendance: AttendanceRecordFull[]
   allEmployeeBalances: Array<{ employee: Profile; balances: LeaveBalanceFull[] }>
+  storeSettings: StoreSettings | null
 }
 
 // ---------------------------------------------------------------------------
@@ -793,19 +803,47 @@ function LeaveTab({
 // Attendance Tab
 // ---------------------------------------------------------------------------
 function AttendanceTab({
-  isAdmin, todayAttendance: initialToday, attendanceHistory, attendanceSummary, todayAllAttendance: initialTodayAll,
+  isAdmin, todayAttendance: initialToday, attendanceHistory, attendanceSummary,
+  todayAllAttendance: initialTodayAll, storeSettings: initialSettings,
 }: {
   isAdmin: boolean
   todayAttendance: AttendanceRecord | null
   attendanceHistory: AttendanceRecord[]
   attendanceSummary: { present: number; absent: number; late: number; onLeave: number; halfDay: number; totalWorkHours: number } | null
   todayAllAttendance: AttendanceRecordFull[]
+  storeSettings: StoreSettings | null
 }) {
   const [todayRecord, setTodayRecord] = useState(initialToday)
   const [todayAll, setTodayAll] = useState(initialTodayAll)
   const [clockPending, startClockT] = useTransition()
   const [, startMarkT] = useTransition()
   const [now, setNow] = useState(new Date())
+
+  // ── Geo state ──────────────────────────────────────────────────────────────
+  const [geoChecking, setGeoChecking] = useState(false)
+  // null = no warning; object = outside radius → show dialog
+  const [geoWarning, setGeoWarning] = useState<{
+    distanceM: number
+    radiusM: number
+    strict: boolean
+  } | null>(null)
+
+  // ── Store settings (admin editable) ───────────────────────────────────────
+  const [settings, setSettings] = useState<StoreSettings>(
+    initialSettings ?? {
+      id: 1,
+      geo_check_enabled: false,
+      geo_strict_mode: false,
+      store_latitude: null,
+      store_longitude: null,
+      radius_meters: 200,
+      updated_by: null,
+      updated_at: '',
+    },
+  )
+  const [settingsDirty, setSettingsDirty] = useState(false)
+  const [settingsSaving, setSettingsSaving] = useState(false)
+  const [gettingMyLocation, setGettingMyLocation] = useState(false)
 
   useEffect(() => {
     const t = setInterval(() => setNow(new Date()), 60_000)
@@ -821,6 +859,91 @@ function AttendanceTab({
   async function refreshTodayAll() {
     const r = await getAllEmployeesTodayAttendance()
     setTodayAll(r.data as AttendanceRecordFull[])
+  }
+
+  // ── Clock-in with geo check ────────────────────────────────────────────────
+  const doClockIn = useCallback(() => {
+    startClockT(async () => {
+      const r = await clockIn()
+      if (r.error) toast.error(r.error)
+      else { toast.success('Clocked in! Have a productive day.'); refreshToday() }
+    })
+  }, [])
+
+  async function handleClockIn() {
+    // Skip geo check if not enabled or coordinates not configured
+    if (
+      !settings.geo_check_enabled ||
+      settings.store_latitude == null ||
+      settings.store_longitude == null
+    ) {
+      doClockIn()
+      return
+    }
+
+    setGeoChecking(true)
+    let pos: { lat: number; lng: number }
+    try {
+      pos = await getGPSPosition()
+    } catch (err: any) {
+      setGeoChecking(false)
+      // If strict mode, block. Otherwise warn and allow.
+      if (settings.geo_strict_mode && !isAdmin) {
+        toast.error(`Location error: ${err}`)
+        return
+      }
+      toast.warning(`Location unavailable: ${err} — clocking in anyway.`)
+      doClockIn()
+      return
+    }
+    setGeoChecking(false)
+
+    const dist = haversineDistance(
+      pos.lat, pos.lng,
+      settings.store_latitude!, settings.store_longitude!,
+    )
+
+    if (dist <= settings.radius_meters) {
+      // Within range — clock in silently
+      doClockIn()
+    } else {
+      // Outside — show warning dialog
+      setGeoWarning({
+        distanceM: Math.round(dist),
+        radiusM: settings.radius_meters,
+        strict: settings.geo_strict_mode && !isAdmin,
+      })
+    }
+  }
+
+  // ── Admin: save store settings ─────────────────────────────────────────────
+  async function handleSaveSettings() {
+    setSettingsSaving(true)
+    const r = await saveStoreSettings({
+      geo_check_enabled: settings.geo_check_enabled,
+      geo_strict_mode: settings.geo_strict_mode,
+      store_latitude: settings.store_latitude,
+      store_longitude: settings.store_longitude,
+      radius_meters: settings.radius_meters,
+    })
+    setSettingsSaving(false)
+    if (r.error) { toast.error(r.error); return }
+    setSettingsDirty(false)
+    toast.success('Store settings saved.')
+  }
+
+  async function handleUseMyLocation() {
+    setGettingMyLocation(true)
+    try {
+      const pos = await getGPSPosition()
+      setSettings((s) => ({ ...s, store_latitude: pos.lat, store_longitude: pos.lng }))
+      setSettingsDirty(true)
+      toast.success(`Location set to ${pos.lat.toFixed(6)}, ${pos.lng.toFixed(6)}`)
+    } catch (err: any) {
+      toast.error(`Could not get location: ${err}`)
+    } finally {
+      setGettingMyLocation(false)
+    }
   }
 
   const isClockedIn = !!todayRecord?.check_in
@@ -861,13 +984,18 @@ function AttendanceTab({
           </div>
           <div>
             {!isClockedIn ? (
-              <button onClick={() => startClockT(async () => {
-                const r = await clockIn()
-                if (r.error) toast.error(r.error)
-                else { toast.success('Clocked in! Have a productive day.'); refreshToday() }
-              })} disabled={clockPending}
-                className="flex items-center gap-2 px-6 py-3 rounded-xl bg-emerald-600 text-white font-medium hover:bg-emerald-700 disabled:opacity-50 shadow-sm transition-colors whitespace-nowrap">
-                <LogIn className="w-4 h-4" />{clockPending ? 'Clocking In...' : 'Clock In'}
+              <button
+                onClick={handleClockIn}
+                disabled={clockPending || geoChecking}
+                className="flex items-center gap-2 px-6 py-3 rounded-xl bg-emerald-600 text-white font-medium hover:bg-emerald-700 disabled:opacity-50 shadow-sm transition-colors whitespace-nowrap"
+              >
+                {geoChecking ? (
+                  <><Loader2 className="w-4 h-4 animate-spin" />Getting location…</>
+                ) : clockPending ? (
+                  <><Loader2 className="w-4 h-4 animate-spin" />Clocking In…</>
+                ) : (
+                  <><LogIn className="w-4 h-4" />Clock In{settings.geo_check_enabled && <MapPin className="w-3 h-3 opacity-70" />}</>
+                )}
               </button>
             ) : !isClockedOut ? (
               <button onClick={() => startClockT(async () => {
@@ -967,6 +1095,228 @@ function AttendanceTab({
         <h2 className="text-sm font-semibold text-zinc-900 mb-3">My Attendance History</h2>
         <AttendanceCalendar initialHistory={attendanceHistory} initialSummary={attendanceSummary} />
       </div>
+
+      {/* ── Admin: Geofence Settings ──────────────────────────────────────── */}
+      {isAdmin && (
+        <div className="bg-white rounded-xl border border-zinc-200 overflow-hidden">
+          <div className="flex items-center justify-between px-5 py-4 border-b border-zinc-100">
+            <div className="flex items-center gap-2">
+              <Settings2 className="w-4 h-4 text-zinc-500" />
+              <h2 className="text-sm font-semibold text-zinc-900">Store Geofence Settings</h2>
+            </div>
+            {settingsDirty && (
+              <span className="text-xs text-amber-600 font-medium">Unsaved changes</span>
+            )}
+          </div>
+          <div className="p-5 space-y-5">
+            {/* Enable toggle */}
+            <label className="flex items-start gap-3 cursor-pointer">
+              <div className="relative mt-0.5">
+                <input
+                  type="checkbox"
+                  checked={settings.geo_check_enabled}
+                  onChange={(e) => { setSettings((s) => ({ ...s, geo_check_enabled: e.target.checked })); setSettingsDirty(true) }}
+                  className="sr-only peer"
+                />
+                <div className={cn(
+                  'w-10 h-5 rounded-full transition-colors border',
+                  settings.geo_check_enabled ? 'bg-emerald-500 border-emerald-500' : 'bg-zinc-200 border-zinc-300',
+                )}>
+                  <div className={cn('absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform', settings.geo_check_enabled && 'translate-x-5')} />
+                </div>
+              </div>
+              <div>
+                <p className="text-sm font-medium text-zinc-900">Enable location check on clock-in</p>
+                <p className="text-xs text-zinc-500 mt-0.5">
+                  Employees must be within the allowed radius of the store to clock in
+                </p>
+              </div>
+            </label>
+
+            {settings.geo_check_enabled && (
+              <div className="space-y-4 pl-2 border-l-2 border-zinc-100">
+                {/* Store coordinates */}
+                <div>
+                  <p className="text-xs font-medium text-zinc-500 mb-2">Store Location (GPS coordinates)</p>
+                  <div className="flex flex-wrap gap-3">
+                    <div>
+                      <label className="block text-xs text-zinc-400 mb-1">Latitude</label>
+                      <input
+                        type="number"
+                        step="0.000001"
+                        value={settings.store_latitude ?? ''}
+                        onChange={(e) => { setSettings((s) => ({ ...s, store_latitude: e.target.value ? parseFloat(e.target.value) : null })); setSettingsDirty(true) }}
+                        placeholder="e.g. 24.577890"
+                        className="w-40 px-3 py-1.5 text-sm rounded-lg border border-zinc-200 bg-zinc-50 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs text-zinc-400 mb-1">Longitude</label>
+                      <input
+                        type="number"
+                        step="0.000001"
+                        value={settings.store_longitude ?? ''}
+                        onChange={(e) => { setSettings((s) => ({ ...s, store_longitude: e.target.value ? parseFloat(e.target.value) : null })); setSettingsDirty(true) }}
+                        placeholder="e.g. 73.712891"
+                        className="w-40 px-3 py-1.5 text-sm rounded-lg border border-zinc-200 bg-zinc-50 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                      />
+                    </div>
+                    <div className="flex items-end">
+                      <button
+                        type="button"
+                        onClick={handleUseMyLocation}
+                        disabled={gettingMyLocation}
+                        className="flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-lg border border-blue-200 text-blue-700 bg-blue-50 hover:bg-blue-100 disabled:opacity-50 transition-colors"
+                      >
+                        {gettingMyLocation ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Navigation className="w-3.5 h-3.5" />}
+                        Use my location
+                      </button>
+                    </div>
+                  </div>
+                  {settings.store_latitude != null && settings.store_longitude != null && (
+                    <a
+                      href={`https://www.google.com/maps?q=${settings.store_latitude},${settings.store_longitude}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1 mt-1.5 text-xs text-blue-600 hover:underline"
+                    >
+                      <MapPin className="w-3 h-3" />
+                      Verify on Google Maps ↗
+                    </a>
+                  )}
+                </div>
+
+                {/* Radius */}
+                <div>
+                  <label className="block text-xs font-medium text-zinc-500 mb-1">
+                    Allowed radius (metres)
+                  </label>
+                  <div className="flex items-center gap-3">
+                    <input
+                      type="range"
+                      min={50}
+                      max={1000}
+                      step={50}
+                      value={settings.radius_meters}
+                      onChange={(e) => { setSettings((s) => ({ ...s, radius_meters: parseInt(e.target.value) })); setSettingsDirty(true) }}
+                      className="w-48"
+                    />
+                    <span className="text-sm font-semibold text-zinc-900 w-16">{settings.radius_meters} m</span>
+                    <span className="text-xs text-zinc-400">
+                      (~{(settings.radius_meters / 1000).toFixed(2)} km)
+                    </span>
+                  </div>
+                  <p className="text-xs text-zinc-400 mt-0.5">
+                    Recommended: 100–300 m for a single shop, 500 m+ for large premises
+                  </p>
+                </div>
+
+                {/* Strict mode */}
+                <label className="flex items-start gap-3 cursor-pointer">
+                  <div className="relative mt-0.5">
+                    <input
+                      type="checkbox"
+                      checked={settings.geo_strict_mode}
+                      onChange={(e) => { setSettings((s) => ({ ...s, geo_strict_mode: e.target.checked })); setSettingsDirty(true) }}
+                      className="sr-only"
+                    />
+                    <div className={cn(
+                      'w-10 h-5 rounded-full transition-colors border',
+                      settings.geo_strict_mode ? 'bg-red-500 border-red-500' : 'bg-zinc-200 border-zinc-300',
+                    )}>
+                      <div className={cn('absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform', settings.geo_strict_mode && 'translate-x-5')} />
+                    </div>
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-zinc-900 flex items-center gap-1.5">
+                      {settings.geo_strict_mode ? <Shield className="w-3.5 h-3.5 text-red-500" /> : <ShieldOff className="w-3.5 h-3.5 text-zinc-400" />}
+                      Strict mode
+                    </p>
+                    <p className="text-xs text-zinc-500 mt-0.5">
+                      {settings.geo_strict_mode
+                        ? 'Employees outside the radius cannot clock in (admins are always exempt)'
+                        : 'Show a warning but still allow clock-in from anywhere'}
+                    </p>
+                  </div>
+                </label>
+              </div>
+            )}
+
+            <button
+              type="button"
+              onClick={handleSaveSettings}
+              disabled={!settingsDirty || settingsSaving}
+              className="flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              {settingsSaving && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+              Save Settings
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* ── Geo warning dialog ────────────────────────────────────────────── */}
+      {geoWarning && (
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => !geoWarning.strict && setGeoWarning(null)} />
+          <div className="relative w-full max-w-sm bg-white rounded-2xl shadow-xl p-6 space-y-4">
+            <div className="flex items-center gap-3">
+              <div className={cn(
+                'w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0',
+                geoWarning.strict ? 'bg-red-100' : 'bg-amber-100',
+              )}>
+                <MapPin className={cn('w-5 h-5', geoWarning.strict ? 'text-red-600' : 'text-amber-600')} />
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-zinc-900">
+                  {geoWarning.strict ? 'Outside Store Location' : 'Location Warning'}
+                </p>
+                <p className="text-xs text-zinc-500">Geofence check failed</p>
+              </div>
+            </div>
+
+            <p className="text-sm text-zinc-700">
+              You are <span className="font-semibold text-zinc-900">{geoWarning.distanceM} m</span> from
+              the store. The allowed range is{' '}
+              <span className="font-semibold text-zinc-900">{geoWarning.radiusM} m</span>.
+            </p>
+
+            {geoWarning.strict ? (
+              <>
+                <p className="text-sm text-red-700 bg-red-50 rounded-lg px-3 py-2">
+                  Clock-in is blocked. Please be at the store and try again.
+                </p>
+                <button
+                  onClick={() => setGeoWarning(null)}
+                  className="w-full py-2.5 rounded-xl bg-zinc-100 text-zinc-700 text-sm font-medium hover:bg-zinc-200 transition-colors"
+                >
+                  OK
+                </button>
+              </>
+            ) : (
+              <>
+                <p className="text-sm text-amber-700 bg-amber-50 rounded-lg px-3 py-2">
+                  You are outside the store area. Clock-in will still be recorded.
+                </p>
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => setGeoWarning(null)}
+                    className="flex-1 py-2.5 rounded-xl bg-zinc-100 text-zinc-700 text-sm font-medium hover:bg-zinc-200 transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={() => { setGeoWarning(null); doClockIn() }}
+                    className="flex-1 py-2.5 rounded-xl bg-amber-500 text-white text-sm font-medium hover:bg-amber-600 transition-colors"
+                  >
+                    Clock In Anyway
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   )
 }
@@ -977,7 +1327,7 @@ function AttendanceTab({
 export function HRPanel({
   profile, isAdmin, leaveTypes, myBalances, myApplications,
   todayAttendance, attendanceHistory, attendanceSummary,
-  allPendingApplications, todayAllAttendance, allEmployeeBalances,
+  allPendingApplications, todayAllAttendance, allEmployeeBalances, storeSettings,
 }: HRPanelProps) {
   const [tab, setTab] = useState<'leave' | 'attendance'>('leave')
   const [key, setKey] = useState(0)
@@ -1008,7 +1358,8 @@ export function HRPanel({
       ) : (
         <AttendanceTab key={`att-${key}`} isAdmin={isAdmin}
           todayAttendance={todayAttendance} attendanceHistory={attendanceHistory}
-          attendanceSummary={attendanceSummary} todayAllAttendance={todayAllAttendance} />
+          attendanceSummary={attendanceSummary} todayAllAttendance={todayAllAttendance}
+          storeSettings={storeSettings} />
       )}
     </div>
   )
