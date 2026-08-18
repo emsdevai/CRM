@@ -176,6 +176,8 @@ export async function updateInvoiceFull(
     payment_method?: string | null
     payment_card_type?: string | null
     card_surcharge_pct?: number
+    payment_reference?: string | null
+    payment_meta?: Record<string, string> | null
     items: InvoiceItemInput[]
   },
 ): Promise<{ error: string | null }> {
@@ -214,11 +216,13 @@ export async function updateInvoiceFull(
     const headerUpdate: Record<string, unknown> = {
       subtotal, discount_total: discountTotal, gst_total: gstTotal, grand_total: grandTotal,
     }
-    if (input.customer_id       !== undefined) headerUpdate.customer_id        = input.customer_id
-    if (input.invoice_date)                    headerUpdate.invoice_date        = input.invoice_date
-    if (input.payment_method    !== undefined) headerUpdate.payment_method      = input.payment_method
-    if (input.payment_card_type !== undefined) headerUpdate.payment_card_type   = input.payment_card_type
-    if (input.card_surcharge_pct !== undefined) headerUpdate.card_surcharge_pct = surchargePct
+    if (input.customer_id        !== undefined) headerUpdate.customer_id        = input.customer_id
+    if (input.invoice_date)                     headerUpdate.invoice_date        = input.invoice_date
+    if (input.payment_method     !== undefined) headerUpdate.payment_method      = input.payment_method
+    if (input.payment_card_type  !== undefined) headerUpdate.payment_card_type   = input.payment_card_type
+    if (input.card_surcharge_pct !== undefined) headerUpdate.card_surcharge_pct  = surchargePct
+    if (input.payment_reference  !== undefined) headerUpdate.payment_reference   = input.payment_reference
+    if (input.payment_meta       !== undefined) headerUpdate.payment_meta        = input.payment_meta ?? {}
 
     const { error: invErr } = await supabase.from('invoices').update(headerUpdate).eq('id', id)
     if (invErr) return { error: invErr.message }

@@ -40,6 +40,7 @@ export default async function InvoiceDetailPage({ params }: PageProps) {
   const paymentReference: string = (invoice as any).payment_reference ?? ''
   const paymentCardType: string  = (invoice as any).payment_card_type ?? ''
   const cardSurchargePct: number = (invoice as any).card_surcharge_pct ?? 0
+  const paymentMeta: Record<string, string> = (invoice as any).payment_meta ?? {}
   const cardSurcharge = cardSurchargePct > 0
     ? (((invoice.subtotal ?? 0) - (invoice.discount_total ?? 0) + (invoice.gst_total ?? 0) + freightCharges) * cardSurchargePct) / 100
     : 0
@@ -194,12 +195,15 @@ export default async function InvoiceDetailPage({ params }: PageProps) {
               {paymentMode && (
                 <span className="text-sm text-zinc-600 dark:text-zinc-400">
                   via <span className="font-semibold text-zinc-800 dark:text-zinc-200">{paymentMode}</span>
-                  {paymentCardType && (
-                    <span className="ml-1 text-zinc-500">({paymentCardType})</span>
-                  )}
-                  {paymentReference && (
-                    <span className="ml-1 text-zinc-400">· Ref: {paymentReference}</span>
-                  )}
+                  {/* Card */}
+                  {paymentCardType && <span className="ml-1 text-zinc-500">({paymentCardType}{paymentMeta.card_last4 ? ` ···${paymentMeta.card_last4}` : ''})</span>}
+                  {/* UPI / Bank / Cheque — reference number */}
+                  {paymentReference && <span className="ml-1.5 font-mono text-xs text-zinc-400">#{paymentReference}</span>}
+                  {/* Bank Transfer extra */}
+                  {paymentMeta.bank_name && <span className="ml-1.5 text-zinc-400">· {paymentMeta.bank_name}</span>}
+                  {paymentMeta.ifsc && <span className="ml-1 text-zinc-400 font-mono text-xs">({paymentMeta.ifsc})</span>}
+                  {/* Cheque date */}
+                  {paymentMeta.cheque_date && <span className="ml-1.5 text-zinc-400">· Dt: {paymentMeta.cheque_date}</span>}
                 </span>
               )}
             </div>

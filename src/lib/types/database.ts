@@ -260,6 +260,8 @@ export interface Invoice {
   payment_method: PaymentMethod | null
   payment_card_type: PaymentCardType | null
   card_surcharge_pct: number
+  payment_reference: string | null   // UPI UTR / bank ref / cheque no
+  payment_meta: Record<string, string> | null  // method-specific extras
   salesperson_id: string | null
   invoice_date: string
   created_at: string
