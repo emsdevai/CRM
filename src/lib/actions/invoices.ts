@@ -178,6 +178,8 @@ export async function updateInvoiceFull(
     card_surcharge_pct?: number
     payment_reference?: string | null
     payment_meta?: Record<string, string> | null
+    billed_to?: Record<string, string> | null
+    shipped_to?: Record<string, string> | null
     items: InvoiceItemInput[]
   },
 ): Promise<{ error: string | null }> {
@@ -223,6 +225,8 @@ export async function updateInvoiceFull(
     if (input.card_surcharge_pct !== undefined) headerUpdate.card_surcharge_pct  = surchargePct
     if (input.payment_reference  !== undefined) headerUpdate.payment_reference   = input.payment_reference
     if (input.payment_meta       !== undefined) headerUpdate.payment_meta        = input.payment_meta ?? {}
+    if (input.billed_to          !== undefined) headerUpdate.billed_to           = input.billed_to
+    if (input.shipped_to         !== undefined) headerUpdate.shipped_to          = input.shipped_to
 
     const { error: invErr } = await supabase.from('invoices').update(headerUpdate).eq('id', id)
     if (invErr) return { error: invErr.message }

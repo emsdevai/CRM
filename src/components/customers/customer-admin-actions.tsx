@@ -22,25 +22,29 @@ export function CustomerAdminActions({ customer }: CustomerAdminActionsProps) {
 
   // ── Edit form state ────────────────────────────────────────────────────────
   const [form, setForm] = useState({
-    name:    customer.name ?? '',
-    phone:   customer.phone ?? '',
-    email:   customer.email ?? '',
-    address: customer.address ?? '',
-    city:    customer.city ?? '',
-    state:   customer.state ?? '',
+    name:       customer.name       ?? '',
+    phone:      customer.phone      ?? '',
+    email:      customer.email      ?? '',
+    address:    customer.address    ?? '',
+    city:       customer.city       ?? '',
+    state:      customer.state      ?? '',
+    pincode:    (customer as any).pincode    ?? '',
+    gst_number: (customer as any).gst_number ?? '',
   })
 
   function handleEditSubmit(e: React.FormEvent) {
     e.preventDefault()
     startEditTransition(async () => {
       const result = await updateCustomer(customer.id, {
-        name:    form.name.trim() || undefined,
-        phone:   form.phone.trim() || undefined,
-        email:   form.email.trim() || undefined,
-        address: form.address.trim() || undefined,
-        city:    form.city.trim() || undefined,
-        state:   form.state.trim() || undefined,
-      })
+        name:       form.name.trim()       || undefined,
+        phone:      form.phone.trim()      || undefined,
+        email:      form.email.trim()      || undefined,
+        address:    form.address.trim()    || undefined,
+        city:       form.city.trim()       || undefined,
+        state:      form.state.trim()      || undefined,
+        pincode:    form.pincode.trim()    || undefined,
+        gst_number: form.gst_number.trim() || undefined,
+      } as any)
       if (result.error) {
         toast.error(result.error)
       } else {
@@ -174,6 +178,27 @@ export function CustomerAdminActions({ customer }: CustomerAdminActionsProps) {
                     placeholder="State"
                   />
                 </div>
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-zinc-700 mb-1.5">Pincode</label>
+                <input
+                  className={inputCls}
+                  value={form.pincode}
+                  onChange={e => setForm(f => ({ ...f, pincode: e.target.value }))}
+                  placeholder="e.g. 313001"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-zinc-700 mb-1.5">
+                  GST Number <span className="text-zinc-400 font-normal">(optional)</span>
+                </label>
+                <input
+                  className={inputCls + ' uppercase font-mono'}
+                  value={form.gst_number}
+                  onChange={e => setForm(f => ({ ...f, gst_number: e.target.value.toUpperCase() }))}
+                  placeholder="e.g. 08AABCU9603R1ZX"
+                  maxLength={15}
+                />
               </div>
 
               <div className="flex justify-end gap-3 pt-4 border-t border-zinc-100">

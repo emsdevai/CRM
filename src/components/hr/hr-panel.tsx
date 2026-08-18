@@ -21,6 +21,7 @@ import {
   ShieldOff,
   Settings2,
   Loader2,
+  Trash2,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { haversineDistance, getGPSPosition } from '@/lib/utils/geo'
@@ -37,6 +38,7 @@ import {
   getAllLeaveApplications,
   getAllEmployeesTodayAttendance,
   saveStoreSettings,
+  deleteAttendanceRecord,
 } from '@/lib/actions/hr'
 import type {
   Profile,
@@ -887,13 +889,7 @@ function AttendanceTab({
       pos = await getGPSPosition()
     } catch (err: any) {
       setGeoChecking(false)
-      // If strict mode, block. Otherwise warn and allow.
-      if (settings.geo_strict_mode && !isAdmin) {
-        toast.error(`Location error: ${err}`)
-        return
-      }
-      toast.warning(`Location unavailable: ${err} — clocking in anyway.`)
-      doClockIn()
+      toast.error(`Location error: ${err} — cannot clock in.`)
       return
     }
     setGeoChecking(false)
@@ -907,11 +903,11 @@ function AttendanceTab({
       // Within range — clock in silently
       doClockIn()
     } else {
-      // Outside — show warning dialog
+      // Outside — always block, show the strict warning
       setGeoWarning({
         distanceM: Math.round(dist),
         radiusM: settings.radius_meters,
-        strict: settings.geo_strict_mode && !isAdmin,
+        strict: true,
       })
     }
   }
@@ -998,17 +994,46 @@ function AttendanceTab({
                 )}
               </button>
             ) : !isClockedOut ? (
-              <button onClick={() => startClockT(async () => {
-                const r = await clockOut()
-                if (r.error) toast.error(r.error)
-                else { toast.success('Clocked out. Have a great evening!'); refreshToday() }
-              })} disabled={clockPending}
-                className="flex items-center gap-2 px-6 py-3 rounded-xl bg-red-500 text-white font-medium hover:bg-red-600 disabled:opacity-50 shadow-sm transition-colors whitespace-nowrap">
-                <LogOut className="w-4 h-4" />{clockPending ? 'Clocking Out...' : 'Clock Out'}
-              </button>
+              <div className="flex flex-col items-end gap-2">
+                <button onClick={() => startClockT(async () => {
+                  const r = await clockOut()
+                  if (r.error) toast.error(r.error)
+                  else { toast.success('Clocked out. Have a great evening!'); refreshToday() }
+                })} disabled={clockPending}
+                  className="flex items-center gap-2 px-6 py-3 rounded-xl bg-red-500 text-white font-medium hover:bg-red-600 disabled:opacity-50 shadow-sm transition-colors whitespace-nowrap">
+                  <LogOut className="w-4 h-4" />{clockPending ? 'Clocking Out...' : 'Clock Out'}
+                </button>
+                {isAdmin && todayRecord?.id && (
+                  <button
+                    onClick={async () => {
+                      const r = await deleteAttendanceRecord(todayRecord.id)
+                      if (r.error) toast.error(r.error)
+                      else { toast.success('Record reset — you can clock in again'); refreshToday() }
+                    }}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs text-red-500 hover:text-red-700 hover:bg-red-50 transition-colors border border-red-200"
+                  >
+                    <Trash2 className="w-3 h-3" /> Reset (Demo)
+                  </button>
+                )}
+              </div>
             ) : (
-              <div className="flex items-center gap-2 px-6 py-3 rounded-xl bg-zinc-100 text-zinc-500 font-medium">
-                <CheckCircle2 className="w-4 h-4 text-emerald-500" /> Day Complete
+              <div className="flex flex-col items-end gap-2">
+                <div className="flex items-center gap-2 px-6 py-3 rounded-xl bg-zinc-100 text-zinc-500 font-medium">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-500" /> Day Complete
+                </div>
+                {isAdmin && todayRecord?.id && (
+                  <button
+                    onClick={async () => {
+                      const r = await deleteAttendanceRecord(todayRecord.id)
+                      if (r.error) toast.error(r.error)
+                      else { toast.success('Your record reset — you can clock in again'); refreshToday() }
+                    }}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs text-red-500 hover:text-red-700 hover:bg-red-50 transition-colors border border-red-200"
+                    title="Reset attendance (demo use)"
+                  >
+                    <Trash2 className="w-3 h-3" /> Reset (Demo)
+                  </button>
+                )}
               </div>
             )}
           </div>
@@ -1033,6 +1058,7 @@ function AttendanceTab({
                     <th className="text-left px-4 py-3 text-xs font-medium text-zinc-400">Clock Out</th>
                     <th className="text-right px-4 py-3 text-xs font-medium text-zinc-400">Hours</th>
                     <th className="text-right px-4 py-3 text-xs font-medium text-zinc-400">Override</th>
+                    <th className="text-right px-4 py-3 text-xs font-medium text-zinc-400">Reset</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-zinc-50">
@@ -1079,6 +1105,21 @@ function AttendanceTab({
                               <option key={s} value={s}>{s}</option>
                             ))}
                           </select>
+                        </td>
+                        <td className="px-4 py-3 text-right">
+                          {rec.id && rec.status !== 'Absent' && (
+                            <button
+                              title="Delete clock-in record (allows re-clock)"
+                              onClick={async () => {
+                                const r = await deleteAttendanceRecord(rec.id)
+                                if (r.error) toast.error(r.error)
+                                else { toast.success('Record deleted — employee can clock in again'); refreshTodayAll() }
+                              }}
+                              className="p-1.5 rounded-lg text-zinc-300 hover:text-red-600 hover:bg-red-50 transition-colors"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          )}
                         </td>
                       </tr>
                     )
@@ -1281,39 +1322,15 @@ function AttendanceTab({
               <span className="font-semibold text-zinc-900">{geoWarning.radiusM} m</span>.
             </p>
 
-            {geoWarning.strict ? (
-              <>
-                <p className="text-sm text-red-700 bg-red-50 rounded-lg px-3 py-2">
-                  Clock-in is blocked. Please be at the store and try again.
-                </p>
-                <button
-                  onClick={() => setGeoWarning(null)}
-                  className="w-full py-2.5 rounded-xl bg-zinc-100 text-zinc-700 text-sm font-medium hover:bg-zinc-200 transition-colors"
-                >
-                  OK
-                </button>
-              </>
-            ) : (
-              <>
-                <p className="text-sm text-amber-700 bg-amber-50 rounded-lg px-3 py-2">
-                  You are outside the store area. Clock-in will still be recorded.
-                </p>
-                <div className="flex gap-3">
-                  <button
-                    onClick={() => setGeoWarning(null)}
-                    className="flex-1 py-2.5 rounded-xl bg-zinc-100 text-zinc-700 text-sm font-medium hover:bg-zinc-200 transition-colors"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    onClick={() => { setGeoWarning(null); doClockIn() }}
-                    className="flex-1 py-2.5 rounded-xl bg-amber-500 text-white text-sm font-medium hover:bg-amber-600 transition-colors"
-                  >
-                    Clock In Anyway
-                  </button>
-                </div>
-              </>
-            )}
+            <p className="text-sm text-red-700 bg-red-50 rounded-lg px-3 py-2">
+              Clock-in is blocked. Please be at the store and try again.
+            </p>
+            <button
+              onClick={() => setGeoWarning(null)}
+              className="w-full py-2.5 rounded-xl bg-zinc-100 text-zinc-700 text-sm font-medium hover:bg-zinc-200 transition-colors"
+            >
+              OK
+            </button>
           </div>
         </div>
       )}

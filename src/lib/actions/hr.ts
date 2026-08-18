@@ -775,3 +775,23 @@ export async function getAttendanceSummary(
     return { data: null, error: err.message }
   }
 }
+
+// ---------------------------------------------------------------------------
+// Delete attendance record (admin only — for demo/testing purposes)
+// ---------------------------------------------------------------------------
+
+export async function deleteAttendanceRecord(id: string): Promise<{ error: string | null }> {
+  try {
+    const { profile } = await getCurrentUser()
+    if (profile.role !== 'admin') return { error: 'Admin access required' }
+
+    const service = createServiceClient()
+    const { error } = await service.from('attendance_records').delete().eq('id', id)
+    if (error) return { error: error.message }
+
+    revalidatePath('/hr')
+    return { error: null }
+  } catch (err: any) {
+    return { error: err.message }
+  }
+}

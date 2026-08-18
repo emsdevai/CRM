@@ -155,6 +155,28 @@ export async function updateTeamMember(
 }
 
 // ---------------------------------------------------------------------------
+// Delete team member (admin only — cannot delete yourself)
+// ---------------------------------------------------------------------------
+
+export async function deleteTeamMember(id: string): Promise<{ error: string | null }> {
+  try {
+    const { user } = await requireAdmin()
+    if (id === user.id) return { error: 'You cannot delete your own account' }
+
+    const serviceClient = createServiceClient()
+
+    // Delete the auth user — the profiles row cascades via FK
+    const { error: authErr } = await serviceClient.auth.admin.deleteUser(id)
+    if (authErr) return { error: authErr.message }
+
+    revalidatePath('/admin')
+    return { error: null }
+  } catch (err: any) {
+    return { error: err.message }
+  }
+}
+
+// ---------------------------------------------------------------------------
 // Discount Rules
 // ---------------------------------------------------------------------------
 

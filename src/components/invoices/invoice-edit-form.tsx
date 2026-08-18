@@ -40,6 +40,33 @@ interface PaymentMeta {
   card_last4?: string
 }
 
+interface AddressBlock {
+  name: string
+  gst_number: string
+  phone: string
+  address: string
+  city: string
+  state: string
+  pincode: string
+}
+
+const EMPTY_ADDRESS: AddressBlock = { name: '', gst_number: '', phone: '', address: '', city: '', state: '', pincode: '' }
+
+function addressFromCustomer(c: {
+  name?: string; phone?: string | null; address?: string | null
+  city?: string | null; state?: string | null; pincode?: string | null; gst_number?: string | null
+}): AddressBlock {
+  return {
+    name:       c.name       ?? '',
+    gst_number: c.gst_number ?? '',
+    phone:      c.phone      ?? '',
+    address:    c.address    ?? '',
+    city:       c.city       ?? '',
+    state:      c.state      ?? '',
+    pincode:    c.pincode    ?? '',
+  }
+}
+
 interface InvoiceEditFormProps {
   invoiceId: string
   invoiceNo: string
@@ -51,6 +78,8 @@ interface InvoiceEditFormProps {
   initialCardSurchargePct: number
   initialPaymentReference: string | null
   initialPaymentMeta: PaymentMeta
+  initialBilledTo: AddressBlock | null
+  initialShippedTo: AddressBlock | null
   initialItems: InvoiceItem[]
 }
 
@@ -156,7 +185,7 @@ function ProductSearchDropdown({ onSelect }: { onSelect: (p: Product) => void })
 // ---------------------------------------------------------------------------
 function CustomerPicker({
   customerId, customerName, onChange,
-}: { customerId: string | null; customerName: string | null; onChange: (id: string | null, name: string | null) => void }) {
+}: { customerId: string | null; customerName: string | null; onChange: (id: string | null, name: string | null, customer?: Customer | null) => void }) {
   const [query,   setQuery]   = useState('')
   const [results, setResults] = useState<Customer[]>([])
   const [loading, setLoading] = useState(false)
@@ -177,7 +206,7 @@ function CustomerPicker({
   }
 
   function pick(c: Customer) {
-    onChange(c.id, c.name)
+    onChange(c.id, c.name, c)
     setQuery('')
     setResults([])
     setOpen(false)
@@ -189,7 +218,7 @@ function CustomerPicker({
       {customerId && customerName && (
         <div className="flex items-center gap-2 px-3 py-2 bg-blue-50 border border-blue-200 rounded-lg text-sm text-blue-800">
           <span className="flex-1 font-medium">{customerName}</span>
-          <button type="button" onClick={() => onChange(null, null)} className="text-blue-500 hover:text-blue-700">
+          <button type="button" onClick={() => onChange(null, null, null)} className="text-blue-500 hover:text-blue-700">
             <X className="w-3.5 h-3.5" />
           </button>
         </div>
@@ -223,6 +252,45 @@ function CustomerPicker({
           )}
         </div>
       )}
+    </div>
+  )
+}
+
+// ---------------------------------------------------------------------------
+// Address block editor
+// ---------------------------------------------------------------------------
+function AddressFields({
+  value, onChange, showGst = false, disabled,
+}: {
+  value: AddressBlock
+  onChange: (v: AddressBlock) => void
+  showGst?: boolean
+  disabled: boolean
+}) {
+  function patch(field: keyof AddressBlock, val: string) {
+    onChange({ ...value, [field]: val })
+  }
+  return (
+    <div className="space-y-2">
+      <input type="text" value={value.name} onChange={(e) => patch('name', e.target.value)}
+        placeholder="Name" className={inputCls} disabled={disabled} />
+      {showGst && (
+        <input type="text" value={value.gst_number} onChange={(e) => patch('gst_number', e.target.value.toUpperCase())}
+          placeholder="GSTIN (optional)" maxLength={15}
+          className={cn(inputCls, 'font-mono uppercase')} disabled={disabled} />
+      )}
+      <input type="text" value={value.phone} onChange={(e) => patch('phone', e.target.value)}
+        placeholder="Phone" className={inputCls} disabled={disabled} />
+      <input type="text" value={value.address} onChange={(e) => patch('address', e.target.value)}
+        placeholder="Street address" className={inputCls} disabled={disabled} />
+      <div className="grid grid-cols-2 gap-2">
+        <input type="text" value={value.city} onChange={(e) => patch('city', e.target.value)}
+          placeholder="City" className={inputCls} disabled={disabled} />
+        <input type="text" value={value.state} onChange={(e) => patch('state', e.target.value)}
+          placeholder="State" className={inputCls} disabled={disabled} />
+      </div>
+      <input type="text" value={value.pincode} onChange={(e) => patch('pincode', e.target.value)}
+        placeholder="Pincode" className={inputCls} disabled={disabled} />
     </div>
   )
 }
@@ -352,6 +420,8 @@ export function InvoiceEditForm({
   initialCardSurchargePct,
   initialPaymentReference,
   initialPaymentMeta,
+  initialBilledTo,
+  initialShippedTo,
   initialItems,
 }: InvoiceEditFormProps) {
   const router = useRouter()
@@ -361,6 +431,11 @@ export function InvoiceEditForm({
   const [customerName, setCustomerName] = useState<string | null>(initialCustomerName)
   const [invoiceDate,  setInvoiceDate]  = useState(initialDate.slice(0, 10))
   const [saving,       setSaving]       = useState(false)
+
+  // Address blocks
+  const [billedTo,      setBilledTo]      = useState<AddressBlock>(initialBilledTo ?? EMPTY_ADDRESS)
+  const [shippedTo,     setShippedTo]     = useState<AddressBlock>(initialShippedTo ?? EMPTY_ADDRESS)
+  const [sameAsBilling, setSameAsBilling] = useState<boolean>(!initialShippedTo || JSON.stringify(initialShippedTo) === JSON.stringify(initialBilledTo))
 
   // Payment fields
   const [paymentMethod,    setPaymentMethod]    = useState<string>(initialPaymentMethod ?? '')
@@ -437,6 +512,8 @@ export function InvoiceEditForm({
       card_surcharge_pct:  paymentMethod === 'Card' ? surchargePct : 0,
       payment_reference:   paymentReference   || null,
       payment_meta:        Object.keys(paymentMeta).length > 0 ? paymentMeta as Record<string, string> : null,
+      billed_to:           billedTo as unknown as Record<string, string>,
+      shipped_to:          (sameAsBilling ? billedTo : shippedTo) as unknown as Record<string, string>,
       items:               itemPayload,
     })
     setSaving(false)
@@ -453,11 +530,67 @@ export function InvoiceEditForm({
         <h2 className="text-sm font-semibold text-zinc-800 dark:text-zinc-200">Invoice Details</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <CustomerPicker customerId={customerId} customerName={customerName}
-            onChange={(id, name) => { setCustomerId(id); setCustomerName(name) }} />
+            onChange={(id, name, customer) => {
+              setCustomerId(id)
+              setCustomerName(name)
+              if (customer) {
+                const addr = addressFromCustomer(customer)
+                setBilledTo(addr)
+                if (sameAsBilling) setShippedTo(addr)
+              }
+            }} />
           <Field label="Invoice Date">
             <input type="date" value={invoiceDate} onChange={(e) => setInvoiceDate(e.target.value)}
               className={inputCls} disabled={saving} />
           </Field>
+        </div>
+      </div>
+
+      {/* ── Billed To / Ship To ─────────────────────────────────────────── */}
+      <div className="bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-700 p-5 space-y-4">
+        <h2 className="text-sm font-semibold text-zinc-800 dark:text-zinc-200">Address</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* Billed To */}
+          <div className="space-y-3">
+            <p className="text-xs font-semibold text-zinc-500 uppercase tracking-wide">Billed To</p>
+            <AddressFields value={billedTo} showGst disabled={saving}
+              onChange={(v) => {
+                setBilledTo(v)
+                if (sameAsBilling) setShippedTo(v)
+              }} />
+          </div>
+
+          {/* Ship To */}
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <p className="text-xs font-semibold text-zinc-500 uppercase tracking-wide">Ship To</p>
+              <label className="flex items-center gap-1.5 text-xs text-zinc-500 cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={sameAsBilling}
+                  onChange={(e) => {
+                    setSameAsBilling(e.target.checked)
+                    if (e.target.checked) setShippedTo(billedTo)
+                  }}
+                  className="rounded border-zinc-300 text-blue-600 focus:ring-blue-500"
+                  disabled={saving}
+                />
+                Same as Billed To
+              </label>
+            </div>
+            {sameAsBilling ? (
+              <div className="text-sm text-zinc-400 border border-dashed border-zinc-200 rounded-lg px-3 py-4 space-y-0.5">
+                {billedTo.name    && <p className="font-medium text-zinc-600">{billedTo.name}</p>}
+                {billedTo.address && <p>{billedTo.address}</p>}
+                {(billedTo.city || billedTo.state || billedTo.pincode) && (
+                  <p>{[billedTo.city, billedTo.state, billedTo.pincode].filter(Boolean).join(', ')}</p>
+                )}
+                {!billedTo.name && !billedTo.address && <p className="italic">Fill in Billed To first</p>}
+              </div>
+            ) : (
+              <AddressFields value={shippedTo} disabled={saving} onChange={setShippedTo} />
+            )}
+          </div>
         </div>
       </div>
 

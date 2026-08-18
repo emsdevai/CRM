@@ -185,6 +185,8 @@ export interface Customer {
   address: string | null
   city: string | null
   state: string | null
+  pincode: string | null
+  gst_number: string | null
   demographic: Demographic
   total_spent: number
   salesperson_id: string | null

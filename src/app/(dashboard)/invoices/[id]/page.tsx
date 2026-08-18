@@ -45,6 +45,10 @@ export default async function InvoiceDetailPage({ params }: PageProps) {
     ? (((invoice.subtotal ?? 0) - (invoice.discount_total ?? 0) + (invoice.gst_total ?? 0) + freightCharges) * cardSurchargePct) / 100
     : 0
 
+  // Stored address blocks (set via invoice edit) override live customer data
+  const storedBilledTo: Record<string, string> | null = (invoice as any).billed_to ?? null
+  const storedShippedTo: Record<string, string> | null = (invoice as any).shipped_to ?? null
+
   const customer = invoice.customer as {
     name: string
     phone?: string | null
@@ -136,18 +140,33 @@ export default async function InvoiceDetailPage({ params }: PageProps) {
           </div>
         </div>
 
-        {/* Billed To / Ship To */}
+        {/* Billed To / Ship To — stored blocks (set in invoice edit) take priority */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-0 border-b border-zinc-100 dark:border-zinc-800">
           <div className="px-6 py-4 md:border-r border-zinc-100 dark:border-zinc-800">
             <p className="text-xs font-semibold text-zinc-500 uppercase tracking-wide mb-2">Billed To</p>
-            {customer ? (
+            {storedBilledTo?.name ? (
+              <div className="space-y-1">
+                <p className="text-base font-semibold text-zinc-900 dark:text-zinc-100">{storedBilledTo.name}</p>
+                {storedBilledTo.gst_number && <p className="text-xs text-zinc-500">GSTIN: {storedBilledTo.gst_number}</p>}
+                {storedBilledTo.phone && (
+                  <div className="flex items-center gap-1.5 text-sm text-zinc-500">
+                    <Phone className="w-3.5 h-3.5" />{storedBilledTo.phone}
+                  </div>
+                )}
+                {storedBilledTo.address && <p className="text-sm text-zinc-500">{storedBilledTo.address}</p>}
+                {(storedBilledTo.city || storedBilledTo.state || storedBilledTo.pincode) && (
+                  <p className="text-sm text-zinc-500">
+                    {[storedBilledTo.city, storedBilledTo.state, storedBilledTo.pincode].filter(Boolean).join(', ')}
+                  </p>
+                )}
+              </div>
+            ) : customer ? (
               <div className="space-y-1">
                 <p className="text-base font-semibold text-zinc-900 dark:text-zinc-100">{customer.name}</p>
                 {customer.gst_number && <p className="text-xs text-zinc-500">GSTIN: {customer.gst_number}</p>}
                 {customer.phone && (
                   <div className="flex items-center gap-1.5 text-sm text-zinc-500">
-                    <Phone className="w-3.5 h-3.5" />
-                    {customer.phone}
+                    <Phone className="w-3.5 h-3.5" />{customer.phone}
                   </div>
                 )}
                 {customer.address && <p className="text-sm text-zinc-500">{customer.address}</p>}
@@ -164,25 +183,29 @@ export default async function InvoiceDetailPage({ params }: PageProps) {
 
           <div className="px-6 py-4">
             <p className="text-xs font-semibold text-zinc-500 uppercase tracking-wide mb-2">Ship To</p>
-            {customer ? (
-              <div className="space-y-1">
-                <p className="text-base font-semibold text-zinc-900 dark:text-zinc-100">{customer.name}</p>
-                {customer.phone && (
-                  <div className="flex items-center gap-1.5 text-sm text-zinc-500">
-                    <Phone className="w-3.5 h-3.5" />
-                    {customer.phone}
-                  </div>
-                )}
-                {customer.address && <p className="text-sm text-zinc-500">{customer.address}</p>}
-                {(customer.city || customer.state || customer.pincode) && (
-                  <p className="text-sm text-zinc-500">
-                    {[customer.city, customer.state, customer.pincode].filter(Boolean).join(', ')}
-                  </p>
-                )}
-              </div>
-            ) : (
-              <p className="text-sm text-zinc-400">—</p>
-            )}
+            {(() => {
+              const s = storedShippedTo ?? (customer ? {
+                name: customer.name, phone: customer.phone, address: customer.address,
+                city: customer.city, state: customer.state, pincode: customer.pincode,
+              } : null)
+              if (!s?.name) return <p className="text-sm text-zinc-400">—</p>
+              return (
+                <div className="space-y-1">
+                  <p className="text-base font-semibold text-zinc-900 dark:text-zinc-100">{s.name}</p>
+                  {s.phone && (
+                    <div className="flex items-center gap-1.5 text-sm text-zinc-500">
+                      <Phone className="w-3.5 h-3.5" />{s.phone}
+                    </div>
+                  )}
+                  {s.address && <p className="text-sm text-zinc-500">{s.address}</p>}
+                  {(s.city || s.state || s.pincode) && (
+                    <p className="text-sm text-zinc-500">
+                      {[s.city, s.state, s.pincode].filter(Boolean).join(', ')}
+                    </p>
+                  )}
+                </div>
+              )
+            })()}
           </div>
         </div>
 

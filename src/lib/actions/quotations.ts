@@ -95,7 +95,7 @@ export async function searchCustomers(query: string): Promise<Customer[]> {
 
     let q = supabase
       .from('customers')
-      .select('id, name, phone, customer_number, email, salesperson_id')
+      .select('id, name, phone, customer_number, email, salesperson_id, address, city, state, pincode, gst_number')
       .order('name', { ascending: true })
       .limit(20)
 

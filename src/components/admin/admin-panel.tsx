@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { toast } from 'sonner'
-import { Download, Edit2, Plus, Save, X, Check, Package, Users, Percent, Building2 } from 'lucide-react'
+import { Download, Edit2, Plus, Save, X, Check, Package, Users, Percent, Building2, Trash2 } from 'lucide-react'
 import * as Tabs from '@radix-ui/react-tabs'
 import * as Dialog from '@radix-ui/react-dialog'
 import { useForm } from 'react-hook-form'
@@ -17,6 +17,7 @@ import {
   exportProductsCsv,
   exportLeadsCsv,
   exportInvoicesCsv,
+  deleteTeamMember,
 } from '@/lib/actions/admin'
 import type { Profile, DiscountRule, Role } from '@/lib/types/database'
 
@@ -98,6 +99,8 @@ function TeamTab({
 }) {
   const [dialogOpen, setDialogOpen] = useState(false)
   const [editMember, setEditMember] = useState<(typeof members)[0] | null>(null)
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null)
+  const [deleting, setDeleting] = useState(false)
 
   function openCreate() {
     setEditMember(null)
@@ -112,6 +115,15 @@ function TeamTab({
   function handleSuccess() {
     setDialogOpen(false)
     setEditMember(null)
+  }
+
+  async function handleDelete(id: string) {
+    setDeleting(true)
+    const { error } = await deleteTeamMember(id)
+    setDeleting(false)
+    setConfirmDeleteId(null)
+    if (error) toast.error(error)
+    else toast.success('Team member deleted')
   }
 
   return (
@@ -185,14 +197,42 @@ function TeamTab({
                     </span>
                   </td>
                   <td className="px-4 py-3 text-right">
-                    <button
-                      onClick={() => openEdit(member)}
-                      disabled={member.id === currentUserId && false}
-                      className="p-1.5 rounded-lg text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100 transition-colors"
-                      title="Edit member"
-                    >
-                      <Edit2 className="w-4 h-4" />
-                    </button>
+                    <div className="flex items-center justify-end gap-1">
+                      <button
+                        onClick={() => openEdit(member)}
+                        className="p-1.5 rounded-lg text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100 transition-colors"
+                        title="Edit member"
+                      >
+                        <Edit2 className="w-4 h-4" />
+                      </button>
+                      {member.id !== currentUserId && (
+                        confirmDeleteId === member.id ? (
+                          <div className="flex items-center gap-1">
+                            <button
+                              onClick={() => handleDelete(member.id)}
+                              disabled={deleting}
+                              className="px-2 py-1 rounded-lg bg-red-600 text-white text-xs font-medium hover:bg-red-700 disabled:opacity-50 transition-colors"
+                            >
+                              {deleting ? '...' : 'Confirm'}
+                            </button>
+                            <button
+                              onClick={() => setConfirmDeleteId(null)}
+                              className="p-1.5 rounded-lg text-zinc-400 hover:bg-zinc-100 transition-colors"
+                            >
+                              <X className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        ) : (
+                          <button
+                            onClick={() => setConfirmDeleteId(member.id)}
+                            className="p-1.5 rounded-lg text-zinc-400 hover:text-red-600 hover:bg-red-50 transition-colors"
+                            title="Delete member"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        )
+                      )}
+                    </div>
                   </td>
                 </tr>
               ))}
