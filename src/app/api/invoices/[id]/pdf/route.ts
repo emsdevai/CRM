@@ -256,7 +256,10 @@ export async function GET(
       .no-print { display: none !important; }
       @page { margin: 1cm; size: A4; }
     }
+    .qr-wrap img, .qr-wrap canvas { display: block !important; }
+    * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   </style>
+  <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
 </head>
 <body>
 
@@ -342,10 +345,13 @@ export async function GET(
       <div class="company-name">Jangid Brothers</div>
       <div class="company-tagline">Complete Furniture Retail</div>
     </div>
-    <div style="text-align:right">
-      <div class="invoice-badge">Tax Invoice</div>
-      <div class="invoice-number">${invoice.invoice_no}</div>
-      <div class="invoice-date">Date: ${fmtDate(invoice.invoice_date)}</div>
+    <div style="text-align:right;display:flex;align-items:flex-start;gap:16px">
+      <div>
+        <div class="invoice-badge">Tax Invoice</div>
+        <div class="invoice-number">${invoice.invoice_no}</div>
+        <div class="invoice-date">Date: ${fmtDate(invoice.invoice_date)}</div>
+      </div>
+      <div class="qr-wrap" id="qrcode" style="width:72px;height:72px;flex-shrink:0"></div>
     </div>
   </div>
 
@@ -509,6 +515,14 @@ export async function GET(
       } catch(e) { alert('Network error.') }
       btn.disabled = false; btn.textContent = 'Save'
     }
+
+    // Generate QR code with invoice details
+    try {
+      new QRCode(document.getElementById('qrcode'), {
+        text: 'INV:${invoice.invoice_no}|CUST:${(customer?.name ?? '').replace(/[|]/g, '')}|AMT:${grandTotal.toFixed(0)}|DT:${invoice.invoice_date.slice(0, 10)}',
+        width: 72, height: 72, correctLevel: QRCode.CorrectLevel.M,
+      })
+    } catch(e) {}
 
     if (new URLSearchParams(window.location.search).get('print') === '1') {
       window.addEventListener('load', () => window.print())

@@ -19,6 +19,7 @@ const baseSchema = z.object({
   manager_id: z.string().nullable().optional(),
   phone: z.string().nullable().optional(),
   annual_target: z.coerce.number().min(0, 'Target must be 0 or more'),
+  max_discount_pct: z.coerce.number().min(0).max(100).nullable().optional(),
 })
 
 const createSchema = baseSchema.extend({
@@ -106,6 +107,7 @@ export function TeamMemberForm({
       manager_id: member?.manager_id ?? undefined,
       phone: member?.phone ?? '',
       annual_target: member?.annual_target ?? 0,
+      max_discount_pct: member?.max_discount_pct ?? null,
     },
   })
 
@@ -120,6 +122,7 @@ export function TeamMemberForm({
         manager_id: member.manager_id ?? undefined,
         phone: member.phone ?? '',
         annual_target: member.annual_target ?? 0,
+        max_discount_pct: member.max_discount_pct ?? null,
       })
     }
   }, [member, reset])
@@ -134,6 +137,7 @@ export function TeamMemberForm({
           manager_id: values.manager_id ?? null,
           phone: values.phone ?? undefined,
           annual_target: values.annual_target,
+          max_discount_pct: values.max_discount_pct ?? null,
         })
         if (error) {
           toast.error(error)
@@ -149,6 +153,7 @@ export function TeamMemberForm({
           manager_id: values.manager_id ?? null,
           phone: values.phone ?? undefined,
           annual_target: values.annual_target,
+          max_discount_pct: values.max_discount_pct ?? null,
         })
         if (error) {
           toast.error(error)
@@ -256,6 +261,28 @@ export function TeamMemberForm({
           disabled={submitting}
         />
       </Field>
+
+      {/* Max Discount % — salesperson only */}
+      {selectedRole === 'salesperson' && (
+        <Field
+          label="Max Discount % Override"
+          error={(errors as any).max_discount_pct?.message}
+        >
+          <input
+            {...register('max_discount_pct')}
+            type="number"
+            min="0"
+            max="100"
+            step="0.5"
+            className={inputCls}
+            placeholder="Leave blank to use role default"
+            disabled={submitting}
+          />
+          <p className="text-xs text-zinc-400 mt-1">
+            Overrides the role-level discount limit for this person. Leave blank to use the default.
+          </p>
+        </Field>
+      )}
 
       {/* Actions */}
       <div className="flex items-center justify-end gap-3 pt-2 border-t border-zinc-100">

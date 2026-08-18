@@ -62,6 +62,7 @@ export interface Profile {
   manager_id: string | null
   phone: string | null
   annual_target: number
+  max_discount_pct: number | null
   avatar_url: string | null
   created_at: string
   updated_at: string
@@ -198,6 +199,7 @@ export interface Quotation {
   id: string
   lead_id: string | null
   customer_id: string | null
+  title: string | null
   stage: QuotationStage
   subtotal: number
   discount_total: number

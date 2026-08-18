@@ -286,6 +286,21 @@ export async function getPendingApprovals() {
 
 export async function getDiscountRule(role: string) {
   const supabase = await createClient()
+
+  // Check for per-person override on the current user's profile
+  const { data: { user } } = await supabase.auth.getUser()
+  if (user) {
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('max_discount_pct')
+      .eq('id', user.id)
+      .single()
+    if (profile?.max_discount_pct != null) {
+      const max = profile.max_discount_pct as number
+      return { min_pct: 0, max_pct: max, requires_approval_above: max }
+    }
+  }
+
   const { data } = await supabase
     .from('discount_rules')
     .select('*')
@@ -791,6 +806,62 @@ export async function updateQuotationStage(
 
     if (error) return { error: error.message }
     revalidatePath('/quotations')
+    return { error: null }
+  } catch {
+    return { error: 'Unexpected error' }
+  }
+}
+
+// ---------------------------------------------------------------------------
+// UPDATE META (title, notes, stage) — admin or draft owner
+// ---------------------------------------------------------------------------
+export async function updateQuotationMeta(
+  id: string,
+  input: {
+    title?: string | null
+    notes?: string | null
+    stage?: QuotationStage
+  },
+): Promise<{ error: string | null }> {
+  try {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return { error: 'Unauthorized' }
+
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', user.id)
+      .single()
+
+    const { data: quotation } = await supabase
+      .from('quotations')
+      .select('created_by, stage')
+      .eq('id', id)
+      .single()
+
+    if (!quotation) return { error: 'Quotation not found' }
+
+    const isAdmin = profile?.role === 'admin'
+    const isOwnerAndDraft = quotation.created_by === user.id && quotation.stage === 'Draft'
+
+    if (!isAdmin && !isOwnerAndDraft) {
+      return { error: 'Only admins or the owner of a Draft quotation can edit it' }
+    }
+
+    const updatePayload: Record<string, unknown> = {}
+    if (input.title !== undefined) updatePayload.title = input.title || null
+    if (input.notes !== undefined) updatePayload.notes = input.notes || null
+    if (input.stage !== undefined && isAdmin) updatePayload.stage = input.stage
+
+    const { error } = await supabase
+      .from('quotations')
+      .update(updatePayload)
+      .eq('id', id)
+
+    if (error) return { error: error.message }
+    revalidatePath('/quotations')
+    revalidatePath(`/quotations/${id}`)
     return { error: null }
   } catch {
     return { error: 'Unexpected error' }

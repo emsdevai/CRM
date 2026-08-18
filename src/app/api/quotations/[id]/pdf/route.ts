@@ -144,8 +144,11 @@ export async function GET(
     .grand-total-row td { font-size:17px; font-weight:800; padding-top:10px; border-top:2.5px solid #111; }
     .footer { margin-top:36px; padding-top:14px; border-top:1px solid #eee; text-align:center; font-size:11px; color:#bbb; }
     .validity-box { background:#fffbeb; border:1px solid #fde68a; border-radius:8px; padding:10px 14px; margin-bottom:16px; font-size:12px; color:#92400e; }
+    .qr-wrap img, .qr-wrap canvas { display:block !important; }
+    * { -webkit-print-color-adjust:exact; print-color-adjust:exact; }
     @media print { body { padding:16px; } .no-print { display:none!important; } @page { margin:1cm; size:A4; } }
   </style>
+  <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
 </head>
 <body>
 
@@ -159,14 +162,18 @@ export async function GET(
     <div>
       <div class="company-name">Jangid Brothers</div>
       <div class="company-tagline">Complete Furniture Retail</div>
+      ${(quotation as any).title ? `<div style="font-size:14px;font-weight:600;color:#333;margin-top:6px">${(quotation as any).title}</div>` : ''}
     </div>
-    <div style="text-align:right">
-      <div class="quot-badge">Quotation</div>
-      <div class="quot-number">${id.slice(0, 8).toUpperCase()}</div>
-      <div style="font-size:12px;color:#666">Date: ${fmtDate(quotation.created_at)}</div>
-      <div style="margin-top:4px">
-        <span style="font-size:12px;font-weight:700;color:${stageColor};border:1.5px solid ${stageColor};border-radius:12px;padding:2px 10px">${quotation.stage}</span>
+    <div style="text-align:right;display:flex;align-items:flex-start;gap:16px">
+      <div>
+        <div class="quot-badge">Quotation</div>
+        <div class="quot-number">${id.slice(0, 8).toUpperCase()}</div>
+        <div style="font-size:12px;color:#666">Date: ${fmtDate(quotation.created_at)}</div>
+        <div style="margin-top:4px">
+          <span style="font-size:12px;font-weight:700;color:${stageColor};border:1.5px solid ${stageColor};border-radius:12px;padding:2px 10px">${quotation.stage}</span>
+        </div>
       </div>
+      <div class="qr-wrap" id="qrcode" style="width:72px;height:72px;flex-shrink:0"></div>
     </div>
   </div>
 
@@ -224,6 +231,14 @@ export async function GET(
   </div>
 
   <script>
+    // Generate QR code with quotation details
+    try {
+      new QRCode(document.getElementById('qrcode'), {
+        text: 'QUOT:${id.slice(0, 8).toUpperCase()}|CUST:${(recipient?.name ?? '').replace(/[|]/g, '')}|AMT:${grandTotal.toFixed(0)}|DT:${quotation.created_at.slice(0, 10)}',
+        width: 72, height: 72, correctLevel: QRCode.CorrectLevel.M,
+      })
+    } catch(e) {}
+
     if (new URLSearchParams(window.location.search).get('print') === '1') {
       window.addEventListener('load', () => window.print())
     }

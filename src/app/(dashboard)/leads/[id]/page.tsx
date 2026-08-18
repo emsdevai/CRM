@@ -7,6 +7,7 @@ import { StageBadge } from '@/components/shared/status-badge'
 import { ActivityLog } from '@/components/leads/activity-log'
 import { StageStepper } from '@/components/leads/stage-stepper'
 import { LeadDetailActions } from '@/components/leads/lead-detail-actions'
+import { LeadReassignSelect } from '@/components/leads/lead-reassign-select'
 import { formatCurrency, formatDate, getInitials } from '@/lib/utils'
 import { cn } from '@/lib/utils'
 import type {
@@ -350,6 +351,15 @@ export default async function LeadDetailPage({
 
           {/* Stage Stepper */}
           <StageStepper leadId={id} currentStage={lead.stage} />
+
+          {/* Admin: Reassign lead */}
+          {profile.role === 'admin' && (
+            <LeadReassignSelect
+              leadId={id}
+              currentAssigneeId={lead.assigned_to}
+              salespeople={typedSalespeople}
+            />
+          )}
 
           {/* Quick Actions */}
           <LeadDetailActions

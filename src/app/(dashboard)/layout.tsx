@@ -12,6 +12,7 @@ const DEMO_PROFILE: Profile = {
   manager_id: null,
   phone: '+91 98765 43210',
   annual_target: 5000000,
+  max_discount_pct: null,
   avatar_url: null,
   created_at: new Date().toISOString(),
   updated_at: new Date().toISOString(),

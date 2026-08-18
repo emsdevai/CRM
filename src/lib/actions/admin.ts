@@ -86,6 +86,7 @@ export async function createTeamMember(input: {
   manager_id?: string | null
   phone?: string
   annual_target?: number
+  max_discount_pct?: number | null
 }): Promise<{ data: Profile | null; error: string | null }> {
   try {
     await requireAdmin()
@@ -112,6 +113,7 @@ export async function createTeamMember(input: {
         manager_id: input.manager_id ?? null,
         phone: input.phone ?? null,
         annual_target: input.annual_target ?? 0,
+        max_discount_pct: input.max_discount_pct ?? null,
       })
       .eq('id', authData.user.id)
       .select()
@@ -134,6 +136,7 @@ export async function updateTeamMember(
     manager_id: string | null
     phone: string
     annual_target: number
+    max_discount_pct: number | null
   }>,
 ): Promise<{ error: string | null }> {
   try {

@@ -52,10 +52,12 @@ export default async function QuotationDetailPage({ params }: PageProps) {
 
   const shortId = quotation.id.slice(0, 8).toUpperCase()
 
+  const quotationTitle = (quotation as any).title as string | null
+
   return (
     <div className="max-w-5xl mx-auto space-y-6">
       <PageHeader
-        title={`Quotation #${shortId}`}
+        title={quotationTitle ? `${quotationTitle}` : `Quotation #${shortId}`}
         breadcrumb={[
           { label: 'Quotations', href: '/quotations' },
           { label: `#${shortId}` },
@@ -71,7 +73,7 @@ export default async function QuotationDetailPage({ params }: PageProps) {
               Download PDF
             </Link>
             <QuotationStageBadge stage={quotation.stage} />
-            {quotation.stage === 'Draft' && (
+            {(quotation.stage === 'Draft' || role === 'admin') && (
               <Link
                 href={`/quotations/${id}/edit`}
                 className="px-3 py-1.5 text-sm font-medium border border-zinc-200 dark:border-zinc-700 rounded-lg hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors text-zinc-600 dark:text-zinc-300"
