@@ -188,15 +188,15 @@ export default async function CustomersPage({
       {/* ── Customer Table ─────────────────────────────────────────────────── */}
       <div className="bg-white rounded-xl border border-zinc-200 overflow-hidden">
         {/* Header */}
-        <div className="hidden sm:grid grid-cols-[auto_2fr_1fr_1fr_auto_auto_auto] items-center gap-4 px-4 py-2.5 bg-zinc-50 border-b border-zinc-200">
+        <div className="hidden sm:grid grid-cols-[auto_2fr_1fr_1fr_auto_auto_minmax(9rem,auto)] items-center gap-4 px-4 py-2.5 bg-zinc-50 border-b border-zinc-200">
           {[
             { label: 'Customer#',   cls: '' },
             { label: 'Name & Email', cls: '' },
             { label: 'City',         cls: '' },
-            { label: 'Total Spent',  cls: '' },
+            { label: 'Total Spent',  cls: 'text-right' },
             { label: 'Orders',       cls: 'text-center' },
             { label: 'Since',        cls: '' },
-            { label: '',             cls: '' },
+            { label: 'Actions',      cls: 'text-right' },
           ].map(({ label, cls }, i) => (
             <span
               key={i}
@@ -218,7 +218,7 @@ export default async function CustomersPage({
             {customers.map(customer => (
               <div
                 key={customer.id}
-                className="grid grid-cols-1 sm:grid-cols-[auto_2fr_1fr_1fr_auto_auto_auto] items-center gap-3 sm:gap-4 px-4 py-3.5 hover:bg-zinc-50 transition-colors"
+                className="grid grid-cols-1 sm:grid-cols-[auto_2fr_1fr_1fr_auto_auto_minmax(9rem,auto)] items-center gap-3 sm:gap-4 px-4 py-3.5 hover:bg-zinc-50 transition-colors"
               >
                 {/* Customer number */}
                 <div className="hidden sm:block">
@@ -252,7 +252,7 @@ export default async function CustomersPage({
                 </div>
 
                 {/* Total Spent */}
-                <div>
+                <div className="text-right">
                   <span className="text-sm font-semibold text-zinc-900 tabular-nums">
                     {formatCurrency(customer.total_spent ?? 0)}
                   </span>

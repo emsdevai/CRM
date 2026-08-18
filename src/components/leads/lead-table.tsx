@@ -106,7 +106,7 @@ export function LeadTable({ leads, loading, isAdmin, onView }: LeadTableProps) {
   return (
     <div className="bg-white rounded-xl border border-zinc-200 overflow-hidden">
       {/* Header row – hidden on mobile */}
-      <div className="hidden sm:grid grid-cols-[2fr_auto_1fr_1fr_1fr_auto_auto] items-center gap-4 px-4 py-2.5 bg-zinc-50 border-b border-zinc-200">
+      <div className="hidden sm:grid grid-cols-[2fr_auto_1fr_1fr_1fr_auto_minmax(9rem,auto)] items-center gap-4 px-4 py-2.5 bg-zinc-50 border-b border-zinc-200">
         {[
           'Name & Phone',
           'Stage',
@@ -114,7 +114,7 @@ export function LeadTable({ leads, loading, isAdmin, onView }: LeadTableProps) {
           'Assigned To',
           'Est. Value',
           'Created',
-          '',
+          'Actions',
         ].map((col, i) => (
           <span
             key={i}
@@ -130,7 +130,7 @@ export function LeadTable({ leads, loading, isAdmin, onView }: LeadTableProps) {
         {leads.map(lead => (
           <div
             key={lead.id}
-            className="grid grid-cols-[1fr_auto] sm:grid-cols-[2fr_auto_1fr_1fr_1fr_auto_auto] items-center gap-3 sm:gap-4 px-4 py-3 hover:bg-zinc-50 transition-colors"
+            className="grid grid-cols-[1fr_auto] sm:grid-cols-[2fr_auto_1fr_1fr_1fr_auto_minmax(9rem,auto)] items-center gap-3 sm:gap-4 px-4 py-3 hover:bg-zinc-50 transition-colors"
           >
             {/* Name + Phone (always visible) */}
             <div className="min-w-0">

@@ -200,8 +200,9 @@ export default async function QuotationsPage({ searchParams }: PageProps) {
                   creator: { name: string | null } | null
                   lead: { id: string; name: string } | null
                   customer: { id: string; name: string } | null
-                  item_count: number
+                  items?: { id: string }[]
                 }>).map((q) => {
+                  const itemCount = q.items?.length ?? 0
                   const recipient = q.lead ?? q.customer
                   const recipientHref = q.lead
                     ? `/leads/${q.lead.id}`
@@ -236,7 +237,7 @@ export default async function QuotationsPage({ searchParams }: PageProps) {
                       </td>
                       <td className="px-4 py-3 text-right">
                         <span className="text-sm text-zinc-600 dark:text-zinc-400">
-                          {q.item_count}
+                          {itemCount}
                         </span>
                       </td>
                       <td className="px-4 py-3 text-right">

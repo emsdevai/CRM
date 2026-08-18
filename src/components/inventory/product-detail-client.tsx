@@ -176,7 +176,7 @@ export function ProductDetailClient({
             {/* QR code / barcode — always shown; QR uses SKU, linear barcode uses barcode field if available */}
             <div className="p-4 border-t border-zinc-100">
               <p className="text-xs font-semibold text-zinc-500 uppercase tracking-wide mb-3">
-                QR / Barcode
+                QR Code
               </p>
               <BarcodeDisplay
                 value={product.barcode || product.sku}

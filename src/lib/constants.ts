@@ -42,14 +42,14 @@ export const NAV_ITEMS: NavItem[] = [
     icon:  'Package',
   },
   {
-    label: 'Scan & Quote',
-    href:  '/scan',
-    icon:  'Scan',
-  },
-  {
     label: 'Catalog',
     href:  '/catalog',
     icon:  'LayoutGrid',
+  },
+  {
+    label: 'Offers',
+    href:  '/scan',
+    icon:  'Tag',
   },
   {
     label: 'Analytics',

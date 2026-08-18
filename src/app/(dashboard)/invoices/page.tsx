@@ -168,8 +168,10 @@ export default async function InvoicesPage({ searchParams }: PageProps) {
                   payment_status: PaymentStatus
                   customer: { id: string; name: string } | null
                   salesperson: { id: string; name: string | null } | null
-                  item_count: number
-                }>).map((inv) => (
+                  items?: { id: string }[]
+                }>).map((inv) => {
+                  const itemCount = inv.items?.length ?? 0
+                  return (
                   <tr
                     key={inv.id}
                     className="group hover:bg-zinc-50/60 dark:hover:bg-zinc-800/40 transition-colors"
@@ -198,7 +200,7 @@ export default async function InvoicesPage({ searchParams }: PageProps) {
                     </td>
                     <td className="px-4 py-3 text-right">
                       <span className="text-sm text-zinc-600 dark:text-zinc-400">
-                        {inv.item_count}
+                        {itemCount}
                       </span>
                     </td>
                     <td className="px-4 py-3 text-right">
@@ -239,7 +241,8 @@ export default async function InvoicesPage({ searchParams }: PageProps) {
                       </div>
                     </td>
                   </tr>
-                ))}
+                  )
+                })}
               </tbody>
             </table>
           </div>

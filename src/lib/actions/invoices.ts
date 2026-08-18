@@ -37,7 +37,8 @@ export async function getInvoices(filters: {
         `
         *,
         customer:customers(id, name, customer_number, phone),
-        salesperson:profiles!invoices_salesperson_id_fkey(id, name)
+        salesperson:profiles!invoices_salesperson_id_fkey(id, name),
+        items:invoice_items(id)
       `,
         { count: 'exact' },
       )

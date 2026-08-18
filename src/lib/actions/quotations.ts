@@ -217,7 +217,8 @@ export async function getQuotations(filters: {
         *,
         creator:profiles!quotations_created_by_fkey(id, name, role),
         lead:leads(id, name, phone),
-        customer:customers(id, name, customer_number)
+        customer:customers(id, name, customer_number),
+        items:quotation_items(id)
       `,
         { count: 'exact' },
       )

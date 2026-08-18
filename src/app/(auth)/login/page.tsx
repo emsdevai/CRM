@@ -109,7 +109,7 @@ export default function LoginPage() {
             {[
               '360° Lead & Customer Tracking',
               'Smart Quotation Builder with GST',
-              'Inventory & Barcode Management',
+              'Inventory & QR Code Management',
               'Role-Based Access Control',
             ].map((feat) => (
               <div key={feat} className="flex items-center gap-3">

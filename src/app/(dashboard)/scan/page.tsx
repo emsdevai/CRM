@@ -746,7 +746,7 @@ export default function ScanPage() {
               <div className="bg-white rounded-xl border border-zinc-200 p-5">
                 <p className="text-sm font-medium text-zinc-700 mb-3 flex items-center gap-1.5">
                   <Barcode className="w-4 h-4 text-zinc-400" />
-                  Or enter SKU / Barcode manually
+                  Or enter SKU manually
                 </p>
                 <form onSubmit={handleManualSearch} className="flex gap-2">
                   <input
